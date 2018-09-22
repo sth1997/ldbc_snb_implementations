@@ -27,7 +27,7 @@ public class TinkerPopLoader {
     private static final long TX_MAX_RETRIES = 1000;
 
     private static void loadVertices(Graph graph, Path filePath,
-                                    boolean printLoadingDots, int batchSize, long progReportPeriod)
+                                     boolean printLoadingDots, int batchSize, long progReportPeriod)
             throws IOException, java.text.ParseException {
 
         String[] colNames = null;
@@ -92,7 +92,9 @@ public class TinkerPopLoader {
                 }
 
                 try {
-                    //graph.tx().commit();
+                    if (graph.features().graph().supportsTransactions()) {
+                        graph.tx().commit();
+                    }
                     txSucceeded = true;
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -120,7 +122,7 @@ public class TinkerPopLoader {
     }
 
     private static void loadProperties(Graph graph, Path filePath,
-                                      boolean printLoadingDots, int batchSize, long progReportPeriod)
+                                       boolean printLoadingDots, int batchSize, long progReportPeriod)
             throws IOException {
         long count = 0;
         String[] colNames = null;
@@ -144,27 +146,33 @@ public class TinkerPopLoader {
             int endIndex = Math.min(startIndex + batchSize, lines.size());
             txSucceeded = false;
             txFailCount = 0;
+
+            Vertex vertex = null;
+            String previousId = "";
             do {
                 for (int i = startIndex; i < endIndex; i++) {
                     String line = lines.get(i);
 
                     String[] colVals = line.split("\\|");
-
-                    GraphTraversalSource g = graph.traversal();
-                    Vertex vertex =
-                            g.V().has("iid", entityName + ":" + colVals[0]).next();
-
+                    if (!previousId.equals(colVals[0])) {
+                        GraphTraversalSource g = graph.traversal();
+                        vertex =
+                                g.V().has("iid", entityName + ":" + colVals[0]).next();
+                        previousId = colVals[0];
+                    }
                     for (int j = 1; j < colVals.length; ++j) {
                         vertex.property(VertexProperty.Cardinality.list, colNames[j],
                                 colVals[j]);
                     }
-
                     lineCount++;
                 }
 
                 try {
-                    graph.tx().commit();
+                    if (graph.features().graph().supportsTransactions()) {
+                        graph.tx().commit();
+                    }
                     txSucceeded = true;
+
                 } catch (Exception e) {
                     txFailCount++;
                 }
@@ -190,7 +198,7 @@ public class TinkerPopLoader {
     }
 
     private static void loadEdges(Graph graph, Path filePath, boolean undirected,
-                                 boolean printLoadingDots, int batchSize, long progReportPeriod)
+                                  boolean printLoadingDots, int batchSize, long progReportPeriod)
             throws IOException, java.text.ParseException {
         long count = 0;
         String[] colNames = null;
@@ -218,6 +226,9 @@ public class TinkerPopLoader {
         long nextProgReportTime = startTime + progReportPeriod * 1000;
         long lastLineCount = 0;
 
+        Vertex vertex1 = null;
+        String previousId = "";
+
         for (int startIndex = 1; startIndex < lines.size();
              startIndex += batchSize) {
             int endIndex = Math.min(startIndex + batchSize, lines.size());
@@ -230,8 +241,11 @@ public class TinkerPopLoader {
                     String[] colVals = line.split("\\|");
 
                     GraphTraversalSource g = graph.traversal();
-                    Vertex vertex1 =
-                            g.V().has("iid", v1EntityName + ":" + colVals[0]).next();
+                    if (!colVals[0].equals(previousId)) {
+                        vertex1 =
+                                g.V().has("iid", v1EntityName + ":" + colVals[0]).next();
+                        previousId = colVals[0];
+                    }
                     Vertex vertex2 =
                             g.V().has("iid", v2EntityName + ":" + colVals[1]).next();
 
