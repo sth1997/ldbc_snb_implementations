@@ -1,13 +1,20 @@
 package com.ldbc.impls.workloads.ldbc.snb.tinkerpop;
 
 import org.apache.commons.cli.*;
+import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.T;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.VertexProperty;
 import org.apache.tinkerpop.gremlin.structure.io.IoCore;
+import org.apache.tinkerpop.gremlin.structure.util.GraphFactory;
+import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerFactory;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
+import org.janusgraph.core.*;
+import org.janusgraph.core.schema.JanusGraphManagement;
+import org.janusgraph.core.schema.SchemaAction;
+import org.janusgraph.graphdb.database.management.ManagementSystem;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -146,24 +153,21 @@ public class TinkerPopLoader {
             int endIndex = Math.min(startIndex + batchSize, lines.size());
             txSucceeded = false;
             txFailCount = 0;
-
-            Vertex vertex = null;
-            String previousId = "";
             do {
                 for (int i = startIndex; i < endIndex; i++) {
                     String line = lines.get(i);
 
                     String[] colVals = line.split("\\|");
-                    if (!previousId.equals(colVals[0])) {
-                        GraphTraversalSource g = graph.traversal();
-                        vertex =
-                                g.V().has("iid", entityName + ":" + colVals[0]).next();
-                        previousId = colVals[0];
-                    }
+
+                    GraphTraversalSource g = graph.traversal();
+                    Vertex vertex =
+                            g.V().has("iid", entityName + ":" + colVals[0]).next();
+
                     for (int j = 1; j < colVals.length; ++j) {
                         vertex.property(VertexProperty.Cardinality.list, colNames[j],
                                 colVals[j]);
                     }
+
                     lineCount++;
                 }
 
@@ -172,8 +176,8 @@ public class TinkerPopLoader {
                         graph.tx().commit();
                     }
                     txSucceeded = true;
-
                 } catch (Exception e) {
+                    e.printStackTrace();
                     txFailCount++;
                 }
 
@@ -358,6 +362,8 @@ public class TinkerPopLoader {
         if (cmd.hasOption("progReportPeriod")) {
             progReportPeriod = Long.decode(cmd.getOptionValue("progReportPeriod"));
         }
+
+
         String vertexLabels[] = {
                 "person",
                 "comment",
@@ -468,7 +474,81 @@ public class TinkerPopLoader {
                 "tagclass_isSubclassOf_tagclass_0_0.csv"
         };
 
-        try (Graph graph = TinkerGraph.open()) {
+        final PropertiesConfiguration conf = new PropertiesConfiguration();
+        conf.addProperty("gremlin.graph", "org.janusgraph.core.JanusGraphFactory");
+        conf.addProperty("storage.backend", "inmemory");
+        try (JanusGraph graph = JanusGraphFactory.open(conf)) {
+//        try (TinkerGraph graph = TinkerGraph.open(conf)) {
+            try {
+                ManagementSystem mgmt;
+
+                // Declare all vertex labels.
+                for( String vLabel : vertexLabels ) {
+                    System.out.println(vLabel);
+                    mgmt = (ManagementSystem) graph.openManagement();
+                    mgmt.makeVertexLabel(vLabel).make();
+                    mgmt.commit();
+                }
+                logger.log(Level.INFO, "Vertex labels have been created");
+
+                // Declare all edge labels.
+                for( String eLabel : edgeLabels ) {
+                    System.out.println(eLabel);
+                    mgmt = (ManagementSystem) graph.openManagement();
+                    mgmt.makeEdgeLabel(eLabel).multiplicity(Multiplicity.SIMPLE).make();
+                    mgmt.commit();
+                }
+                logger.log(Level.INFO, "Edge labels have been created");
+
+                // Delcare all properties with Cardinality.SINGLE
+                for ( String propKey : singleCardPropKeys ) {
+                    System.out.println(propKey);
+                    mgmt = (ManagementSystem) graph.openManagement();
+                    mgmt.makePropertyKey(propKey).dataType(String.class)
+                            .cardinality(Cardinality.SINGLE).make();
+                    mgmt.commit();
+                }
+
+                // Delcare all properties with Cardinality.LIST
+                for ( String propKey : listCardPropKeys ) {
+                    System.out.println(propKey);
+                    mgmt = (ManagementSystem) graph.openManagement();
+                    mgmt.makePropertyKey(propKey).dataType(String.class)
+                            .cardinality(Cardinality.LIST).make();
+                    mgmt.commit();
+                }
+
+                /*
+                 * Create a special ID property where we will store the IDs of
+                 * vertices in the SNB dataset, and a corresponding index. This is
+                 * necessary because TitanDB generates its own IDs for graph
+                 * vertices, but the benchmark references vertices by the ID they
+                 * were originally assigned during dataset generation.
+                 */
+                mgmt = (ManagementSystem) graph.openManagement();
+                mgmt.makePropertyKey("iid").dataType(String.class)
+                        .cardinality(Cardinality.SINGLE).make();
+                mgmt.commit();
+                logger.log(Level.INFO, "ID property iid created");
+
+                mgmt = (ManagementSystem) graph.openManagement();
+                PropertyKey iid = mgmt.getPropertyKey("iid");
+                mgmt.buildIndex("byIid", Vertex.class).addKey(iid).buildCompositeIndex();
+                mgmt.commit();
+                logger.log(Level.INFO, "Index on iid created");
+
+//                mgmt.awaitGraphIndexStatus(graph, "byIid").call();
+
+//                mgmt = (ManagementSystem) graph.openManagement();
+//                mgmt.updateIndex(mgmt.getGraphIndex("byIid"), SchemaAction.REINDEX)
+//                        .get();
+//                mgmt.commit();
+
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, e.toString());
+                return;
+            }
+            long startTime = System.currentTimeMillis();
             for (String fileName : nodeFiles) {
                 System.out.print("Loading node file " + fileName + " ");
                 try {
@@ -507,7 +587,10 @@ public class TinkerPopLoader {
                     System.out.println(" File not found.");
                 }
             }
-            graph.io(IoCore.graphml()).writeGraph("tinkerpop-modern.xml");
+            graph.io(IoCore.gryo()).writeGraph("sftiny.gyro"); long timeElapsed = System.currentTimeMillis() - startTime;
+            System.out.println(String.format(
+                    "Time Elapsed: %03dm.%02ds",
+                    (timeElapsed / 1000) / 60, (timeElapsed / 1000) % 60));
         } catch (Exception e) {
             System.out.println("Exception: " + e);
             e.printStackTrace();
