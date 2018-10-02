@@ -51,80 +51,63 @@ public class TinkerPopLoader {
         List<String> lines = Files.readAllLines(filePath);
         colNames = lines.get(0).split("\\|");
         long lineCount = 0;
-        boolean txSucceeded;
-        long txFailCount;
 
         // For progress reporting
         long startTime = System.currentTimeMillis();
         long nextProgReportTime = startTime + progReportPeriod * 1000;
         long lastLineCount = 0;
 
-        for (int startIndex = 1; startIndex < lines.size();
-             startIndex += batchSize) {
-            int endIndex = Math.min(startIndex + batchSize, lines.size());
-            txSucceeded = false;
-            txFailCount = 0;
-            do {
-                for (int i = startIndex; i < endIndex; i++) {
-                    String line = lines.get(i);
+        for (int i = 1; i < lines.size(); ++i) {
+            String line = lines.get(i);
 
-                    String[] colVals = line.split("\\|");
-                    propertiesMap = new HashMap<>();
+            String[] colVals = line.split("\\|");
+            propertiesMap = new HashMap<>();
 
-                    for (int j = 0; j < colVals.length; ++j) {
-                        if (colNames[j].equals("id")) {
-                            propertiesMap.put("iid", entityName + ":" + colVals[j]);
-                        } else if (colNames[j].equals("birthday")) {
-                            propertiesMap.put(colNames[j], String.valueOf(
-                                    birthdayDateFormat.parse(colVals[j]).getTime()));
-                        } else if (colNames[j].equals("creationDate")) {
-                            propertiesMap.put(colNames[j], String.valueOf(
-                                    creationDateDateFormat.parse(colVals[j]).getTime()));
-                        } else {
-                            propertiesMap.put(colNames[j], colVals[j]);
-                        }
-                    }
-
-                    propertiesMap.put(T.label, entityName);
-
-                    List<Object> keyValues = new ArrayList<>();
-                    propertiesMap.forEach((key, val) -> {
-                        keyValues.add(key);
-                        keyValues.add(val);
-                    });
-
-                    graph.addVertex(keyValues.toArray());
-
-                    lineCount++;
+            for (int j = 0; j < colVals.length; ++j) {
+                if (colNames[j].equals("id")) {
+                    propertiesMap.put("iid", entityName + ":" + colVals[j]);
+                } else if (colNames[j].equals("birthday")) {
+                    propertiesMap.put(colNames[j], String.valueOf(
+                            birthdayDateFormat.parse(colVals[j]).getTime()));
+                } else if (colNames[j].equals("creationDate")) {
+                    propertiesMap.put(colNames[j], String.valueOf(
+                            creationDateDateFormat.parse(colVals[j]).getTime()));
+                } else {
+                    propertiesMap.put(colNames[j], colVals[j]);
                 }
-
-                try {
-                    if (graph.features().graph().supportsTransactions()) {
-                        graph.tx().commit();
-                    }
-                    txSucceeded = true;
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    txFailCount++;
-                }
-
-                if (txFailCount > TX_MAX_RETRIES) {
-                    throw new RuntimeException(String.format(
-                            "ERROR: Transaction failed %d times (file lines [%d,%d]), " +
-                                    "aborting...", txFailCount, startIndex, endIndex - 1));
-                }
-            } while (!txSucceeded);
-
-            if (printLoadingDots &&
-                    (System.currentTimeMillis() > nextProgReportTime)) {
-                long timeElapsed = System.currentTimeMillis() - startTime;
-                long linesLoaded = lineCount - lastLineCount;
-                System.out.println(String.format(
-                        "Time Elapsed: %03dm.%02ds, Lines Loaded: +%d",
-                        (timeElapsed / 1000) / 60, (timeElapsed / 1000) % 60, linesLoaded));
-                nextProgReportTime += progReportPeriod * 1000;
-                lastLineCount = lineCount;
             }
+
+            propertiesMap.put(T.label, entityName);
+
+            List<Object> keyValues = new ArrayList<>();
+            propertiesMap.forEach((key, val) -> {
+                keyValues.add(key);
+                keyValues.add(val);
+            });
+
+            graph.addVertex(keyValues.toArray());
+
+            lineCount++;
+        }
+
+        try {
+            if (graph.features().graph().supportsTransactions()) {
+                graph.tx().commit();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
+        if (printLoadingDots &&
+                (System.currentTimeMillis() > nextProgReportTime)) {
+            long timeElapsed = System.currentTimeMillis() - startTime;
+            long linesLoaded = lineCount - lastLineCount;
+            System.out.println(String.format(
+                    "Time Elapsed: %03dm.%02ds, Lines Loaded: +%d",
+                    (timeElapsed / 1000) / 60, (timeElapsed / 1000) % 60, linesLoaded));
+            nextProgReportTime += progReportPeriod * 1000;
+            lastLineCount = lineCount;
         }
     }
 
@@ -140,64 +123,51 @@ public class TinkerPopLoader {
         List<String> lines = Files.readAllLines(filePath);
         colNames = lines.get(0).split("\\|");
         long lineCount = 0;
-        boolean txSucceeded;
-        long txFailCount;
 
         // For progress reporting
         long startTime = System.currentTimeMillis();
         long nextProgReportTime = startTime + progReportPeriod * 1000;
         long lastLineCount = 0;
+        Vertex vertex = null;
+        String previousId = "";
 
-        for (int startIndex = 1; startIndex < lines.size();
-             startIndex += batchSize) {
-            int endIndex = Math.min(startIndex + batchSize, lines.size());
-            txSucceeded = false;
-            txFailCount = 0;
-            do {
-                for (int i = startIndex; i < endIndex; i++) {
-                    String line = lines.get(i);
+        for (int i = 1; i < lines.size(); ++i) {
+            String line = lines.get(i);
 
-                    String[] colVals = line.split("\\|");
+            String[] colVals = line.split("\\|");
 
-                    GraphTraversalSource g = graph.traversal();
-                    Vertex vertex =
-                            g.V().has("iid", entityName + ":" + colVals[0]).next();
-
-                    for (int j = 1; j < colVals.length; ++j) {
-                        vertex.property(VertexProperty.Cardinality.list, colNames[j],
-                                colVals[j]);
-                    }
-
-                    lineCount++;
-                }
-
-                try {
-                    if (graph.features().graph().supportsTransactions()) {
-                        graph.tx().commit();
-                    }
-                    txSucceeded = true;
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    txFailCount++;
-                }
-
-                if (txFailCount > TX_MAX_RETRIES) {
-                    throw new RuntimeException(String.format(
-                            "ERROR: Transaction failed %d times (file lines [%d,%d]), " +
-                                    "aborting...", txFailCount, startIndex, endIndex - 1));
-                }
-            } while (!txSucceeded);
-
-            if (printLoadingDots &&
-                    (System.currentTimeMillis() > nextProgReportTime)) {
-                long timeElapsed = System.currentTimeMillis() - startTime;
-                long linesLoaded = lineCount - lastLineCount;
-                System.out.println(String.format(
-                        "Time Elapsed: %03dm.%02ds, Lines Loaded: +%d",
-                        (timeElapsed / 1000) / 60, (timeElapsed / 1000) % 60, linesLoaded));
-                nextProgReportTime += progReportPeriod * 1000;
-                lastLineCount = lineCount;
+            if (!colVals[0].equals(previousId)) {
+                GraphTraversalSource g = graph.traversal();
+                vertex =
+                        g.V().has("iid", entityName + ":" + colVals[0]).next();
+                previousId = colVals[0];
             }
+
+            for (int j = 1; j < colVals.length; ++j) {
+                vertex.property(VertexProperty.Cardinality.list, colNames[j],
+                        colVals[j]);
+            }
+
+            lineCount++;
+        }
+
+        try {
+            if (graph.features().graph().supportsTransactions()) {
+                graph.tx().commit();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        if (printLoadingDots &&
+                (System.currentTimeMillis() > nextProgReportTime)) {
+            long timeElapsed = System.currentTimeMillis() - startTime;
+            long linesLoaded = lineCount - lastLineCount;
+            System.out.println(String.format(
+                    "Time Elapsed: %03dm.%02ds, Lines Loaded: +%d",
+                    (timeElapsed / 1000) / 60, (timeElapsed / 1000) % 60, linesLoaded));
+            nextProgReportTime += progReportPeriod * 1000;
+            lastLineCount = lineCount;
         }
     }
 
@@ -222,8 +192,6 @@ public class TinkerPopLoader {
         List<String> lines = Files.readAllLines(filePath);
         colNames = lines.get(0).split("\\|");
         long lineCount = 0;
-        boolean txSucceeded;
-        long txFailCount;
 
         // For progress reporting
         long startTime = System.currentTimeMillis();
@@ -233,69 +201,54 @@ public class TinkerPopLoader {
         Vertex vertex1 = null;
         String previousId = "";
 
-        for (int startIndex = 1; startIndex < lines.size();
-             startIndex += batchSize) {
-            int endIndex = Math.min(startIndex + batchSize, lines.size());
-            txSucceeded = false;
-            txFailCount = 0;
-            do {
-                for (int i = startIndex; i < endIndex; i++) {
-                    String line = lines.get(i);
+        for (int i = 1; i < lines.size(); ++i) {
+            String line = lines.get(i);
 
-                    String[] colVals = line.split("\\|");
+            String[] colVals = line.split("\\|");
 
-                    GraphTraversalSource g = graph.traversal();
-                    if (!colVals[0].equals(previousId)) {
-                        vertex1 =
-                                g.V().has("iid", v1EntityName + ":" + colVals[0]).next();
-                        previousId = colVals[0];
-                    }
-                    Vertex vertex2 =
-                            g.V().has("iid", v2EntityName + ":" + colVals[1]).next();
+            GraphTraversalSource g = graph.traversal();
+            if (!colVals[0].equals(previousId)) {
+                vertex1 =
+                        g.V().has("iid", v1EntityName + ":" + colVals[0]).next();
+                previousId = colVals[0];
+            }
+            Vertex vertex2 =
+                    g.V().has("iid", v2EntityName + ":" + colVals[1]).next();
 
-                    propertiesMap = new HashMap<>();
-                    for (int j = 2; j < colVals.length; ++j) {
-                        if (colNames[j].equals("creationDate")) {
-                            propertiesMap.put(colNames[j], String.valueOf(
-                                    creationDateDateFormat.parse(colVals[j]).getTime()));
-                        } else if (colNames[j].equals("joinDate")) {
-                            propertiesMap.put(colNames[j], String.valueOf(
-                                    joinDateDateFormat.parse(colVals[j]).getTime()));
-                        } else {
-                            propertiesMap.put(colNames[j], colVals[j]);
-                        }
-                    }
-
-                    List<Object> keyValues = new ArrayList<>();
-                    propertiesMap.forEach((key, val) -> {
-                        keyValues.add(key);
-                        keyValues.add(val);
-                    });
-
-                    vertex1.addEdge(edgeLabel, vertex2, keyValues.toArray());
-
-                    if (undirected) {
-                        vertex2.addEdge(edgeLabel, vertex1, keyValues.toArray());
-                    }
-
-                    lineCount++;
+            propertiesMap = new HashMap<>();
+            for (int j = 2; j < colVals.length; ++j) {
+                if (colNames[j].equals("creationDate")) {
+                    propertiesMap.put(colNames[j], String.valueOf(
+                            creationDateDateFormat.parse(colVals[j]).getTime()));
+                } else if (colNames[j].equals("joinDate")) {
+                    propertiesMap.put(colNames[j], String.valueOf(
+                            joinDateDateFormat.parse(colVals[j]).getTime()));
+                } else {
+                    propertiesMap.put(colNames[j], colVals[j]);
                 }
+            }
 
-                try {
-                    if (graph.features().graph().supportsTransactions()) {
-                        graph.tx().commit();
-                    }
-                    txSucceeded = true;
-                } catch (Exception e) {
-                    txFailCount++;
-                }
+            List<Object> keyValues = new ArrayList<>();
+            propertiesMap.forEach((key, val) -> {
+                keyValues.add(key);
+                keyValues.add(val);
+            });
 
-                if (txFailCount > TX_MAX_RETRIES) {
-                    throw new RuntimeException(String.format(
-                            "ERROR: Transaction failed %d times (file lines [%d,%d]), " +
-                                    "aborting...", txFailCount, startIndex, endIndex - 1));
+            vertex1.addEdge(edgeLabel, vertex2, keyValues.toArray());
+
+            if (undirected) {
+                vertex2.addEdge(edgeLabel, vertex1, keyValues.toArray());
+            }
+
+            lineCount++;
+
+            try {
+                if (graph.features().graph().supportsTransactions()) {
+                    graph.tx().commit();
                 }
-            } while (!txSucceeded);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
 
             if (printLoadingDots &&
                     (System.currentTimeMillis() > nextProgReportTime)) {
@@ -477,13 +430,13 @@ public class TinkerPopLoader {
         final PropertiesConfiguration conf = new PropertiesConfiguration();
         conf.addProperty("gremlin.graph", "org.janusgraph.core.JanusGraphFactory");
         conf.addProperty("storage.backend", "inmemory");
-        try (JanusGraph graph = JanusGraphFactory.open(conf)) {
+               try (JanusGraph graph = JanusGraphFactory.open(conf)) {
 //        try (TinkerGraph graph = TinkerGraph.open(conf)) {
             try {
                 ManagementSystem mgmt;
 
                 // Declare all vertex labels.
-                for( String vLabel : vertexLabels ) {
+                for (String vLabel : vertexLabels) {
                     System.out.println(vLabel);
                     mgmt = (ManagementSystem) graph.openManagement();
                     mgmt.makeVertexLabel(vLabel).make();
@@ -492,7 +445,7 @@ public class TinkerPopLoader {
                 logger.log(Level.INFO, "Vertex labels have been created");
 
                 // Declare all edge labels.
-                for( String eLabel : edgeLabels ) {
+                for (String eLabel : edgeLabels) {
                     System.out.println(eLabel);
                     mgmt = (ManagementSystem) graph.openManagement();
                     mgmt.makeEdgeLabel(eLabel).multiplicity(Multiplicity.SIMPLE).make();
@@ -501,7 +454,7 @@ public class TinkerPopLoader {
                 logger.log(Level.INFO, "Edge labels have been created");
 
                 // Delcare all properties with Cardinality.SINGLE
-                for ( String propKey : singleCardPropKeys ) {
+                for (String propKey : singleCardPropKeys) {
                     System.out.println(propKey);
                     mgmt = (ManagementSystem) graph.openManagement();
                     mgmt.makePropertyKey(propKey).dataType(String.class)
@@ -510,7 +463,7 @@ public class TinkerPopLoader {
                 }
 
                 // Delcare all properties with Cardinality.LIST
-                for ( String propKey : listCardPropKeys ) {
+                for (String propKey : listCardPropKeys) {
                     System.out.println(propKey);
                     mgmt = (ManagementSystem) graph.openManagement();
                     mgmt.makePropertyKey(propKey).dataType(String.class)
@@ -537,12 +490,12 @@ public class TinkerPopLoader {
                 mgmt.commit();
                 logger.log(Level.INFO, "Index on iid created");
 
-//                mgmt.awaitGraphIndexStatus(graph, "byIid").call();
+                mgmt.awaitGraphIndexStatus(graph, "byIid").call();
 
-//                mgmt = (ManagementSystem) graph.openManagement();
-//                mgmt.updateIndex(mgmt.getGraphIndex("byIid"), SchemaAction.REINDEX)
-//                        .get();
-//                mgmt.commit();
+                mgmt = (ManagementSystem) graph.openManagement();
+                mgmt.updateIndex(mgmt.getGraphIndex("byIid"), SchemaAction.REINDEX)
+                        .get();
+                mgmt.commit();
 
             } catch (Exception e) {
                 logger.log(Level.SEVERE, e.toString());
@@ -587,7 +540,8 @@ public class TinkerPopLoader {
                     System.out.println(" File not found.");
                 }
             }
-            graph.io(IoCore.gryo()).writeGraph("sftiny.gyro"); long timeElapsed = System.currentTimeMillis() - startTime;
+            graph.io(IoCore.graphson()).writeGraph("sftiny_janus.graphson");
+            long timeElapsed = System.currentTimeMillis() - startTime;
             System.out.println(String.format(
                     "Time Elapsed: %03dm.%02ds",
                     (timeElapsed / 1000) / 60, (timeElapsed / 1000) % 60));
