@@ -430,8 +430,8 @@ public class TinkerPopLoader {
         final PropertiesConfiguration conf = new PropertiesConfiguration();
         conf.addProperty("gremlin.graph", "org.janusgraph.core.JanusGraphFactory");
         conf.addProperty("storage.backend", "inmemory");
-//               try (JanusGraph graph = JanusGraphFactory.open(conf)) {
-        try (TinkerGraph graph = TinkerGraph.open(conf)) {
+        try (JanusGraph graph = JanusGraphFactory.open(conf)) {
+//            try (TinkerGraph graph = TinkerGraph.open(conf)) {
             if (JanusGraph.class.isInstance(graph)) {
                 JanusGraph janusGraph = JanusGraph.class.cast(graph);
                 try {
@@ -543,7 +543,7 @@ public class TinkerPopLoader {
                     System.out.println(" File not found.");
                 }
             }
-            graph.io(IoCore.graphson()).writeGraph("sftiny.graphson");
+            graph.io(IoCore.graphson()).writeGraph("sftiny_janus.graphson");
             long timeElapsed = System.currentTimeMillis() - startTime;
             System.out.println(String.format(
                     "Time Elapsed: %03dm.%02ds",
