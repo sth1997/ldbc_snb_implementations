@@ -430,76 +430,79 @@ public class TinkerPopLoader {
         final PropertiesConfiguration conf = new PropertiesConfiguration();
         conf.addProperty("gremlin.graph", "org.janusgraph.core.JanusGraphFactory");
         conf.addProperty("storage.backend", "inmemory");
-               try (JanusGraph graph = JanusGraphFactory.open(conf)) {
-//        try (TinkerGraph graph = TinkerGraph.open(conf)) {
-            try {
-                ManagementSystem mgmt;
+//               try (JanusGraph graph = JanusGraphFactory.open(conf)) {
+        try (TinkerGraph graph = TinkerGraph.open(conf)) {
+            if (JanusGraph.class.isInstance(graph)) {
+                JanusGraph janusGraph = JanusGraph.class.cast(graph);
+                try {
+                    ManagementSystem mgmt;
 
-                // Declare all vertex labels.
-                for (String vLabel : vertexLabels) {
-                    System.out.println(vLabel);
-                    mgmt = (ManagementSystem) graph.openManagement();
-                    mgmt.makeVertexLabel(vLabel).make();
-                    mgmt.commit();
-                }
-                logger.log(Level.INFO, "Vertex labels have been created");
+                    // Declare all vertex labels.
+                    for (String vLabel : vertexLabels) {
+                        System.out.println(vLabel);
+                        mgmt = (ManagementSystem) janusGraph.openManagement();
+                        mgmt.makeVertexLabel(vLabel).make();
+                        mgmt.commit();
+                    }
+                    logger.log(Level.INFO, "Vertex labels have been created");
 
-                // Declare all edge labels.
-                for (String eLabel : edgeLabels) {
-                    System.out.println(eLabel);
-                    mgmt = (ManagementSystem) graph.openManagement();
-                    mgmt.makeEdgeLabel(eLabel).multiplicity(Multiplicity.SIMPLE).make();
-                    mgmt.commit();
-                }
-                logger.log(Level.INFO, "Edge labels have been created");
+                    // Declare all edge labels.
+                    for (String eLabel : edgeLabels) {
+                        System.out.println(eLabel);
+                        mgmt = (ManagementSystem) janusGraph.openManagement();
+                        mgmt.makeEdgeLabel(eLabel).multiplicity(Multiplicity.SIMPLE).make();
+                        mgmt.commit();
+                    }
+                    logger.log(Level.INFO, "Edge labels have been created");
 
-                // Delcare all properties with Cardinality.SINGLE
-                for (String propKey : singleCardPropKeys) {
-                    System.out.println(propKey);
-                    mgmt = (ManagementSystem) graph.openManagement();
-                    mgmt.makePropertyKey(propKey).dataType(String.class)
+                    // Delcare all properties with Cardinality.SINGLE
+                    for (String propKey : singleCardPropKeys) {
+                        System.out.println(propKey);
+                        mgmt = (ManagementSystem) janusGraph.openManagement();
+                        mgmt.makePropertyKey(propKey).dataType(String.class)
+                                .cardinality(Cardinality.SINGLE).make();
+                        mgmt.commit();
+                    }
+
+                    // Delcare all properties with Cardinality.LIST
+                    for (String propKey : listCardPropKeys) {
+                        System.out.println(propKey);
+                        mgmt = (ManagementSystem) janusGraph.openManagement();
+                        mgmt.makePropertyKey(propKey).dataType(String.class)
+                                .cardinality(Cardinality.LIST).make();
+                        mgmt.commit();
+                    }
+
+                    /*
+                     * Create a special ID property where we will store the IDs of
+                     * vertices in the SNB dataset, and a corresponding index. This is
+                     * necessary because TitanDB generates its own IDs for graph
+                     * vertices, but the benchmark references vertices by the ID they
+                     * were originally assigned during dataset generation.
+                     */
+                    mgmt = (ManagementSystem) janusGraph.openManagement();
+                    mgmt.makePropertyKey("iid").dataType(String.class)
                             .cardinality(Cardinality.SINGLE).make();
                     mgmt.commit();
-                }
+                    logger.log(Level.INFO, "ID property iid created");
 
-                // Delcare all properties with Cardinality.LIST
-                for (String propKey : listCardPropKeys) {
-                    System.out.println(propKey);
-                    mgmt = (ManagementSystem) graph.openManagement();
-                    mgmt.makePropertyKey(propKey).dataType(String.class)
-                            .cardinality(Cardinality.LIST).make();
+                    mgmt = (ManagementSystem) janusGraph.openManagement();
+                    PropertyKey iid = mgmt.getPropertyKey("iid");
+                    mgmt.buildIndex("byIid", Vertex.class).addKey(iid).buildCompositeIndex();
                     mgmt.commit();
+                    logger.log(Level.INFO, "Index on iid created");
+
+                    mgmt.awaitGraphIndexStatus(janusGraph, "byIid").call();
+
+                    mgmt = (ManagementSystem) janusGraph.openManagement();
+                    mgmt.updateIndex(mgmt.getGraphIndex("byIid"), SchemaAction.REINDEX)
+                            .get();
+                    mgmt.commit();
+
+                } catch (Exception e) {
+                    logger.log(Level.SEVERE, e.toString());
+                    return;
                 }
-
-                /*
-                 * Create a special ID property where we will store the IDs of
-                 * vertices in the SNB dataset, and a corresponding index. This is
-                 * necessary because TitanDB generates its own IDs for graph
-                 * vertices, but the benchmark references vertices by the ID they
-                 * were originally assigned during dataset generation.
-                 */
-                mgmt = (ManagementSystem) graph.openManagement();
-                mgmt.makePropertyKey("iid").dataType(String.class)
-                        .cardinality(Cardinality.SINGLE).make();
-                mgmt.commit();
-                logger.log(Level.INFO, "ID property iid created");
-
-                mgmt = (ManagementSystem) graph.openManagement();
-                PropertyKey iid = mgmt.getPropertyKey("iid");
-                mgmt.buildIndex("byIid", Vertex.class).addKey(iid).buildCompositeIndex();
-                mgmt.commit();
-                logger.log(Level.INFO, "Index on iid created");
-
-                mgmt.awaitGraphIndexStatus(graph, "byIid").call();
-
-                mgmt = (ManagementSystem) graph.openManagement();
-                mgmt.updateIndex(mgmt.getGraphIndex("byIid"), SchemaAction.REINDEX)
-                        .get();
-                mgmt.commit();
-
-            } catch (Exception e) {
-                logger.log(Level.SEVERE, e.toString());
-                return;
             }
             long startTime = System.currentTimeMillis();
             for (String fileName : nodeFiles) {
@@ -540,7 +543,7 @@ public class TinkerPopLoader {
                     System.out.println(" File not found.");
                 }
             }
-            graph.io(IoCore.graphson()).writeGraph("sftiny_janus.graphson");
+            graph.io(IoCore.graphson()).writeGraph("sftiny.graphson");
             long timeElapsed = System.currentTimeMillis() - startTime;
             System.out.println(String.format(
                     "Time Elapsed: %03dm.%02ds",

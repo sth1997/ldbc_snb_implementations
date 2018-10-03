@@ -38,7 +38,7 @@ public class TinkerPopTrial {
         conf.addProperty("storage.backend", "inmemory");
         try (JanusGraph graph = JanusGraphFactory.open(conf)) {
 //        try (TinkerGraph graph = TinkerGraph.open(conf)) {
-            graph.io(IoCore.gryo()).readGraph("sftiny_janus.gyro");
+            graph.io(IoCore.graphson()).readGraph("sftiny_janus.graphson");
             GraphTraversalSource g = graph.traversal();
             GraphTraversal<Vertex, Vertex> a = g.V().hasLabel("person");
             while (a.hasNext()) {
