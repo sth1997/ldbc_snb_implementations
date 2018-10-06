@@ -55,7 +55,7 @@ public abstract class InteractiveTest extends SnbTest {
 
     @Test
     public void testQuery3() throws Exception {
-        run(db, new LdbcQuery3(15393162790207L, "Puerto_Rico", "Republic_of_Macedonia", new Date(1291161600000L), 30, LIMIT));
+        run(db, new LdbcQuery3(17592186055119L, "Laos", "Scotland", new Date(1306886400000L), 42, LIMIT));
     }
 
     @Test
@@ -95,7 +95,7 @@ public abstract class InteractiveTest extends SnbTest {
 
     @Test
     public void testQuery11() throws Exception {
-        run(db, new LdbcQuery11(30786325579101L, "Puerto_Rico", 2004, LIMIT));
+        run(db, new LdbcQuery11(30786325583618L, "Laos", 2010, LIMIT));
     }
 
     @Test
@@ -145,7 +145,7 @@ public abstract class InteractiveTest extends SnbTest {
 
     @Test
     public void testShortQuery7() throws Exception {
-        run(db, new LdbcShortQuery7MessageReplies(2061584476422L));
+        run(db, new LdbcShortQuery7MessageReplies(549760123945L));
     }
 
     @Test

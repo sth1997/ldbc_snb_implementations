@@ -16,12 +16,13 @@ import java.util.Map;
 
 public class SparqlInteractiveTest extends InteractiveTest {
 
-    private static final boolean isVirtuoso = false;
+    private static final boolean isVirtuoso = true;
 
-    private static BaseDb getBaseDb(){
+    private static BaseDb getBaseDb() {
         if (isVirtuoso) {
             return new VirtuosoInteractiveDb();
-        }{
+        }
+        {
             return new StardogInteractiveDb();
         }
     }
@@ -32,7 +33,7 @@ public class SparqlInteractiveTest extends InteractiveTest {
     private static String endpointVirtuoso = "localhost:1127";
     private static String databaseName = "ldbcsf1";
     private static String queryDir = "queries";
-    private static String graphUri = "http://www.ldbc.eu";
+    private static String graphUri = "http://benchmark-eval.aksw.org";
 
     public SparqlInteractiveTest() {
         super(getBaseDb());
@@ -47,7 +48,7 @@ public class SparqlInteractiveTest extends InteractiveTest {
         final Map<String, String> properties = new HashMap<>();
         if (isVirtuoso) {
             properties.put("endpoint", endpointVirtuoso);
-        }{
+        } else {
             properties.put("endpoint", endpointStardog);
         }
         properties.put("graphUri", graphUri);
@@ -61,10 +62,51 @@ public class SparqlInteractiveTest extends InteractiveTest {
 
     @Ignore
     @Test
-    public void testQuery13() {}
+    public void testQuery13() {
+    }
 
     @Ignore
     @Test
-    public void testQuery14() {}
+    public void testQuery14() {
+    }
 
+    @Ignore
+    @Test
+    public void testUpdateQuery1() throws Exception {
+    }
+
+    @Ignore
+    @Test
+    public void testUpdateQuery2() throws Exception {
+    }
+
+    @Ignore
+    @Test
+    public void testUpdateQuery3() throws Exception {
+    }
+
+    @Ignore
+    @Test
+    public void testUpdateQuery4() throws Exception {
+    }
+
+    @Ignore
+    @Test
+    public void testUpdateQuery5() throws Exception {
+    }
+
+    @Ignore
+    @Test
+    public void testUpdateQuery6() throws Exception {
+    }
+
+    @Ignore
+    @Test
+    public void testUpdateQuery7() throws Exception {
+    }
+
+    @Ignore
+    @Test
+    public void testUpdateQuery8() throws Exception {
+    }
 }
