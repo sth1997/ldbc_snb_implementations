@@ -42,10 +42,11 @@ public class TinkerPopTrial {
     public static void main(String[] args) throws IOException {
         final PropertiesConfiguration conf = new PropertiesConfiguration();
         conf.addProperty("gremlin.graph", "org.janusgraph.core.JanusGraphFactory");
-        conf.addProperty("storage.backend", "inmemory");
-//        try (JanusGraph graph = JanusGraphFactory.open(conf)) {
-        try (TinkerGraph graph = TinkerGraph.open(conf)) {
-            graph.io(IoCore.gryo()).readGraph("sftiny.gyro");
+        conf.addProperty("storage.backend", "berkeleyje");
+        conf.addProperty("storage.directory", "data/graph");
+        try (JanusGraph graph = JanusGraphFactory.open(conf)) {
+//        try (TinkerGraph graph = TinkerGraph.open(conf)) {
+//            graph.io(IoCore.gryo()).readGraph("sftiny_janus.gryo");
             GraphTraversalSource g = graph.traversal();
 //            GraphTraversal<Vertex, Vertex> a = g.V().hasLabel("person");
 //            while (a.hasNext()) {
@@ -56,8 +57,17 @@ public class TinkerPopTrial {
 ////                System.out.println(v.property("language"));
 ////                g.V().hasLabel("person").
 //            }
-            String cypher = "MATCH (person:person) " +
-                    "RETURN person";
+            String cypher = "MATCH (n:Person )-[:IS_LOCATED_IN]->(p:Place)\n" +
+                    "RETURN\n" +
+                    "  n.iid AS personId," +
+                    "  n.firstName AS firstName,\n" +
+                    "  n.lastName AS lastName,\n" +
+                    "  n.birthday AS birthday,\n" +
+                    "  n.locationIP AS locationIP,\n" +
+                    "  n.browserUsed AS browserUsed,\n" +
+                    "  p.iid AS cityId,\n" +
+                    "  n.gender AS gender,\n" +
+                    "  n.creationDate AS creationDate";
             TranslationFacade cfog = new TranslationFacade();
             String gremlin = cfog.toGremlinGroovy(cypher);
             System.out.println(gremlin);

@@ -2,6 +2,8 @@ package com.ldbc.impls.workloads.ldbc.snb.tinkerpop;
 
 import org.apache.commons.cli.*;
 import org.apache.commons.configuration.PropertiesConfiguration;
+import org.apache.tinkerpop.gremlin.groovy.jsr223.GremlinGroovyScriptEngine;
+import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.T;
@@ -15,7 +17,10 @@ import org.janusgraph.core.*;
 import org.janusgraph.core.schema.JanusGraphManagement;
 import org.janusgraph.core.schema.SchemaAction;
 import org.janusgraph.graphdb.database.management.ManagementSystem;
+import org.opencypher.gremlin.translation.TranslationFacade;
 
+import javax.script.Bindings;
+import javax.script.ScriptEngine;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -46,7 +51,7 @@ public class TinkerPopLoader {
                 new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
         creationDateDateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
         String fileNameParts[] = filePath.getFileName().toString().split("_");
-        String entityName = fileNameParts[0];
+        String entityName = fileNameParts[0].substring(0, 1).toUpperCase() + fileNameParts[0].substring(1);
 
         List<String> lines = Files.readAllLines(filePath);
         colNames = lines.get(0).split("\\|");
@@ -118,7 +123,7 @@ public class TinkerPopLoader {
         String[] colNames = null;
         boolean firstLine = true;
         String fileNameParts[] = filePath.getFileName().toString().split("_");
-        String entityName = fileNameParts[0];
+        String entityName = fileNameParts[0].substring(0, 1).toUpperCase() + fileNameParts[0].substring(1);
 
         List<String> lines = Files.readAllLines(filePath);
         colNames = lines.get(0).split("\\|");
@@ -185,9 +190,9 @@ public class TinkerPopLoader {
                 new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
         joinDateDateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
         String fileNameParts[] = filePath.getFileName().toString().split("_");
-        String v1EntityName = fileNameParts[0];
-        String edgeLabel = fileNameParts[1];
-        String v2EntityName = fileNameParts[2];
+        String v1EntityName = fileNameParts[0].substring(0, 1).toUpperCase() + fileNameParts[0].substring(1);
+        String edgeLabel = splitCamelCase(fileNameParts[1]).replaceAll(" ","_").toUpperCase();
+        String v2EntityName = fileNameParts[2].substring(0, 1).toUpperCase() + fileNameParts[2].substring(1);
 
         List<String> lines = Files.readAllLines(filePath);
         colNames = lines.get(0).split("\\|");
@@ -261,6 +266,17 @@ public class TinkerPopLoader {
                 lastLineCount = lineCount;
             }
         }
+    }
+
+    static String splitCamelCase(String s) {
+        return s.replaceAll(
+                String.format("%s|%s|%s",
+                        "(?<=[A-Z])(?=[A-Z][a-z])",
+                        "(?<=[^A-Z])(?=[A-Z])",
+                        "(?<=[A-Za-z])(?=[^A-Za-z])"
+                ),
+                " "
+        );
     }
 
     public static void main(String[] args) throws IOException {
@@ -429,7 +445,8 @@ public class TinkerPopLoader {
 
         final PropertiesConfiguration conf = new PropertiesConfiguration();
         conf.addProperty("gremlin.graph", "org.janusgraph.core.JanusGraphFactory");
-        conf.addProperty("storage.backend", "inmemory");
+        conf.addProperty("storage.backend", "berkeleyje");
+        conf.addProperty("storage.directory", "data/graph");
         try (JanusGraph graph = JanusGraphFactory.open(conf)) {
 //            try (TinkerGraph graph = TinkerGraph.open(conf)) {
             if (JanusGraph.class.isInstance(graph)) {
@@ -543,8 +560,26 @@ public class TinkerPopLoader {
                     System.out.println(" File not found.");
                 }
             }
-            graph.io(IoCore.graphson()).writeGraph("sftiny_janus.graphson");
             long timeElapsed = System.currentTimeMillis() - startTime;
+            System.out.println(String.format(
+                    "Time Elapsed: %03dm.%02ds",
+                    (timeElapsed / 1000) / 60, (timeElapsed / 1000) % 60));
+            graph.io(IoCore.gryo()).writeGraph("sftiny_janus.gryo");
+//            String cypher = "MATCH (person:person) " +
+//                    "RETURN person";
+//            TranslationFacade cfog = new TranslationFacade();
+//            String gremlin = cfog.toGremlinGroovy(cypher);
+//            System.out.println(gremlin);
+//            ScriptEngine engine = new GremlinGroovyScriptEngine();
+//            Bindings bindings = engine.createBindings();
+//            GraphTraversalSource g = graph.traversal();
+//            bindings.put("g", g);
+//            Object o = engine.eval(gremlin, bindings);
+//            GraphTraversal<Vertex, Map<String, Object>> a = (GraphTraversal<Vertex, Map<String, Object>>) o;
+//            while(a.hasNext()){
+//                System.out.println(a.next());
+//            }
+            timeElapsed = System.currentTimeMillis() - startTime;
             System.out.println(String.format(
                     "Time Elapsed: %03dm.%02ds",
                     (timeElapsed / 1000) / 60, (timeElapsed / 1000) % 60));

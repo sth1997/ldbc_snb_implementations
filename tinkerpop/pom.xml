@@ -79,7 +79,12 @@
         <dependency>
             <groupId>org.janusgraph</groupId>
             <artifactId>janusgraph-core</artifactId>
-            <version>0.2.1</version>
+            <version>0.3.1  </version>
+        </dependency>
+        <dependency>
+            <groupId>org.janusgraph</groupId>
+            <artifactId>janusgraph-berkeleyje</artifactId>
+            <version>0.3.1</version>
         </dependency>
         <dependency>
             <groupId>org.opencypher.gremlin</groupId>
