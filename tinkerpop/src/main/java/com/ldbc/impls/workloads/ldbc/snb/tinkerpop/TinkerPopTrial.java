@@ -30,6 +30,8 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class TinkerPopTrial {
 
@@ -43,43 +45,46 @@ public class TinkerPopTrial {
         final PropertiesConfiguration conf = new PropertiesConfiguration();
         conf.addProperty("gremlin.graph", "org.janusgraph.core.JanusGraphFactory");
         conf.addProperty("storage.backend", "berkeleyje");
-        conf.addProperty("storage.directory", "data/graph");
+        conf.addProperty("storage.directory", "dataaa/graph");
         try (JanusGraph graph = JanusGraphFactory.open(conf)) {
 //        try (TinkerGraph graph = TinkerGraph.open(conf)) {
 //            graph.io(IoCore.gryo()).readGraph("sftiny_janus.gryo");
             GraphTraversalSource g = graph.traversal();
-//            GraphTraversal<Vertex, Vertex> a = g.V().hasLabel("person");
-//            while (a.hasNext()) {
-//                Vertex v = a.next();
-//                v.property("language");
-//                System.out.println(v.toString() + "\n---------------");
-////                System.out.println(v.property("iid"));
-////                System.out.println(v.property("language"));
-////                g.V().hasLabel("person").
+//            GraphTraversal<Vertex, Vertex> aa = g.V().hasLabel("Person");
+//            while (aa.hasNext()) {
+//                Vertex v = aa.next();
+//                System.out.println(v.property("iid"));
+//                Iterator<VertexProperty<String>> vpIt = v.properties("language");
+//                while(vpIt.hasNext()){
+//                    System.out.println(vpIt.next());
+//                }
 //            }
-            String cypher = "MATCH (n:Person )-[:IS_LOCATED_IN]->(p:Place)\n" +
+            String cypher = "MATCH path = allShortestPaths((person1:Person {id:32985348833679})-[:KNOWS*..15]-(person2:Person {id:2199023256862}))\n" +
+                    "WITH nodes(path) AS pathNodes\n" +
                     "RETURN\n" +
-                    "  n.iid AS personId," +
-                    "  n.firstName AS firstName,\n" +
-                    "  n.lastName AS lastName,\n" +
-                    "  n.birthday AS birthday,\n" +
-                    "  n.locationIP AS locationIP,\n" +
-                    "  n.browserUsed AS browserUsed,\n" +
-                    "  p.iid AS cityId,\n" +
-                    "  n.gender AS gender,\n" +
-                    "  n.creationDate AS creationDate";
+                    "  extract(n IN pathNodes | n.id) AS personIdsInPath,\n" +
+                    "  reduce(weight=0.0, idx IN range(1,size(pathNodes)-1) | extract(prev IN [pathNodes[idx-1]] | extract(curr IN [pathNodes[idx]] | weight + length((curr)<-[:HAS_CREATOR]-(:Comment)-[:REPLY_OF]->(:Post)-[:HAS_CREATOR]->(prev))*1.0 + length((prev)<-[:HAS_CREATOR]-(:Comment)-[:REPLY_OF]->(:Post)-[:HAS_CREATOR]->(curr))*1.0 + length((prev)-[:HAS_CREATOR]-(:Comment)-[:REPLY_OF]-(:Comment)-[:HAS_CREATOR]-(curr))*0.5) )[0][0]) AS pathWight\n" +
+                    "ORDER BY pathWight DESC";
+            String cypherWithIID = cypher.replaceAll("id:", "iid:").replaceAll("\\.id", "\\.iid");
+            String cypherWithIIDWithoutToInteger = cypherWithIID;
+            Pattern p = Pattern.compile("toInteger\\((.*)\\)");
+            Matcher m = p.matcher(cypherWithIIDWithoutToInteger);
+            if (m.find()) {
+                cypherWithIIDWithoutToInteger = m.replaceAll("$1");
+            }
             TranslationFacade cfog = new TranslationFacade();
-            String gremlin = cfog.toGremlinGroovy(cypher);
+            System.out.println(cypherWithIIDWithoutToInteger);
+            String gremlin = cfog.toGremlinGroovy(cypherWithIIDWithoutToInteger);
             System.out.println(gremlin);
             ScriptEngine engine = new GremlinGroovyScriptEngine();
             Bindings bindings = engine.createBindings();
             bindings.put("g", g);
             Object o = engine.eval(gremlin, bindings);
             GraphTraversal<Vertex, Map<String, Object>> a = (GraphTraversal<Vertex, Map<String, Object>>) o;
-            while(a.hasNext()){
+            while (a.hasNext()) {
+                System.out.println("---");
                 System.out.println(a.next());
             }
-            System.out.println(o.getClass().toString());
         } catch (Exception e) {
             System.out.println("Exception: " + e);
             e.printStackTrace();
