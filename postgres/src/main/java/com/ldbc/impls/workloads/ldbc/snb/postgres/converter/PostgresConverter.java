@@ -86,10 +86,14 @@ public class PostgresConverter extends Converter {
         return new_arr;
     }
 
-    private static long convertDateTimesToEpoch(long dateValue, String format) throws ParseException {
+    private static long convertDateTimesToEpoch(long dateValue, String format) throws SQLException {
         final SimpleDateFormat sdf = new SimpleDateFormat(format);
         sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
-        return sdf.parse(Long.toString(dateValue)).toInstant().toEpochMilli();
+        try {
+            return sdf.parse(Long.toString(dateValue)).toInstant().toEpochMilli();
+        } catch (ParseException e) {
+            throw new SQLException(e);
+        }
 
     }
 
@@ -100,7 +104,7 @@ public class PostgresConverter extends Converter {
      * @param timestamp
      * @return
      */
-    public static long convertLongTimestampToEpoch(long timestamp) throws ParseException {
+    public static long convertLongTimestampToEpoch(long timestamp) throws SQLException {
         return convertDateTimesToEpoch(timestamp, DATETIME_FORMAT);
     }
 
@@ -111,23 +115,9 @@ public class PostgresConverter extends Converter {
      * @param date
      * @return
      */
-    public static long convertLongDateToEpoch(long date) throws ParseException {
+    public static long convertLongDateToEpoch(long date) throws SQLException {
         return convertDateTimesToEpoch(date, DATE_FORMAT);
     }
 
-    public static int convertStartAndEndDateToLatency(long from, long to) throws ParseException {
-        long fromEpoch = convertDateTimesToEpoch(from, DATETIME_FORMAT);
-        long toEpoch = convertDateTimesToEpoch(to, DATETIME_FORMAT);
-        return (int)((toEpoch - fromEpoch) / 1000 / 60);
-    }
-
-    public static long stringTimestampToEpoch(ResultSet r, int column) throws SQLException {
-        final long dateAsLong = r.getLong(column);
-        try {
-            return convertLongDateToEpoch(dateAsLong);
-        } catch (ParseException e) {
-            throw new SQLException(e);
-        }
-    }
 
 }

@@ -143,8 +143,8 @@ public abstract class PostgresDb extends BaseDb<PostgresQueryStore> {
                     result.getLong(1),
                     result.getString(2),
                     result.getInt(3),
-                    PostgresConverter.stringTimestampToEpoch(result, 4),
-                    PostgresConverter.stringTimestampToEpoch(result, 5),
+                    PostgresConverter.convertLongDateToEpoch(result.getLong(4)),
+                    PostgresConverter.convertLongTimestampToEpoch(result.getLong(5)),
                     result.getString(6),
                     result.getString(7),
                     result.getString(8),
@@ -180,7 +180,8 @@ public abstract class PostgresDb extends BaseDb<PostgresQueryStore> {
                     result.getString(3),
                     result.getLong(4),
                     result.getString(5),
-                    PostgresConverter.stringTimestampToEpoch(result, 6));
+                    PostgresConverter.convertLongTimestampToEpoch(result.getLong(6))
+            );
         }
 
     }
@@ -266,7 +267,7 @@ public abstract class PostgresDb extends BaseDb<PostgresQueryStore> {
                     result.getLong(1),
                     result.getString(2),
                     result.getString(3),
-                    PostgresConverter.stringTimestampToEpoch(result, 4),
+                    PostgresConverter.convertLongTimestampToEpoch(result.getLong(4)),
                     result.getLong(5),
                     result.getString(6),
                     result.getInt(7),
@@ -288,7 +289,7 @@ public abstract class PostgresDb extends BaseDb<PostgresQueryStore> {
                     result.getLong(1),
                     result.getString(2),
                     result.getString(3),
-                    PostgresConverter.stringTimestampToEpoch(result, 4),
+                    PostgresConverter.convertLongTimestampToEpoch(result.getLong(4)),
                     result.getLong(5),
                     result.getString(6));
         }
@@ -310,7 +311,7 @@ public abstract class PostgresDb extends BaseDb<PostgresQueryStore> {
                     result.getString(3),
                     result.getLong(4),
                     result.getString(5),
-                    PostgresConverter.stringTimestampToEpoch(result, 6));
+                    PostgresConverter.convertLongTimestampToEpoch(result.getLong(6)));
         }
 
     }
@@ -415,12 +416,13 @@ public abstract class PostgresDb extends BaseDb<PostgresQueryStore> {
             return new LdbcShortQuery1PersonProfileResult(
                     result.getString(1),
                     result.getString(2),
-                    PostgresConverter.stringTimestampToEpoch(result, 3),
+                    PostgresConverter.convertLongTimestampToEpoch(result.getLong(3)),
                     result.getString(4),
                     result.getString(5),
                     result.getLong(6),
                     result.getString(7),
-                    PostgresConverter.stringTimestampToEpoch(result, 8));
+                    PostgresConverter.convertLongTimestampToEpoch(result.getLong(8))
+            );
         }
 
     }
@@ -437,7 +439,7 @@ public abstract class PostgresDb extends BaseDb<PostgresQueryStore> {
             return new LdbcShortQuery2PersonPostsResult(
                     result.getLong(1),
                     result.getString(2),
-                    PostgresConverter.stringTimestampToEpoch(result, 3),
+                    PostgresConverter.convertLongTimestampToEpoch(result.getLong(3)),
                     result.getLong(4),
                     result.getLong(5),
                     result.getString(6),
@@ -459,7 +461,7 @@ public abstract class PostgresDb extends BaseDb<PostgresQueryStore> {
                     result.getLong(1),
                     result.getString(2),
                     result.getString(3),
-                    PostgresConverter.stringTimestampToEpoch(result, 4));
+                    PostgresConverter.convertLongTimestampToEpoch(result.getLong(4)));
         }
 
     }
@@ -475,7 +477,8 @@ public abstract class PostgresDb extends BaseDb<PostgresQueryStore> {
         public LdbcShortQuery4MessageContentResult convertSingleResult(ResultSet result) throws SQLException {
             return new LdbcShortQuery4MessageContentResult(
                     result.getString(1),
-                    PostgresConverter.stringTimestampToEpoch(result, 2));
+                    PostgresConverter.convertLongTimestampToEpoch(result.getLong(2))
+            );
         }
 
     }
@@ -528,7 +531,7 @@ public abstract class PostgresDb extends BaseDb<PostgresQueryStore> {
             return new LdbcShortQuery7MessageRepliesResult(
                     result.getLong(1),
                     result.getString(2),
-                    PostgresConverter.stringTimestampToEpoch(result, 3),
+                    PostgresConverter.convertLongTimestampToEpoch(result.getLong(3)),
                     result.getLong(4),
                     result.getString(5),
                     result.getString(6),
@@ -677,7 +680,7 @@ public abstract class PostgresDb extends BaseDb<PostgresQueryStore> {
         public LdbcSnbBiQuery4PopularCountryTopicsResult convertSingleResult(ResultSet result) throws SQLException {
             long forumId = result.getLong(1);
             String forumTitle = result.getString(2);
-            long forumCreationDate = PostgresConverter.stringTimestampToEpoch(result, 3);
+            long forumCreationDate = PostgresConverter.convertLongTimestampToEpoch(result.getLong(3));
             long personId = result.getLong(4);
             int postCount = result.getInt(5);
             return new LdbcSnbBiQuery4PopularCountryTopicsResult(forumId, forumTitle, forumCreationDate, personId, postCount);
@@ -697,7 +700,7 @@ public abstract class PostgresDb extends BaseDb<PostgresQueryStore> {
             long personId = result.getLong(1);
             String personFirstName = result.getString(2);
             String personLastName = result.getString(3);
-            long personCreationDate = PostgresConverter.stringTimestampToEpoch(result, 4);
+            long personCreationDate = PostgresConverter.convertLongTimestampToEpoch(result.getLong(4));
             int postCount = result.getInt(5);
             return new LdbcSnbBiQuery5TopCountryPostersResult(personId, personFirstName, personLastName, personCreationDate, postCount);
         }
@@ -817,7 +820,7 @@ public abstract class PostgresDb extends BaseDb<PostgresQueryStore> {
         @Override
         public LdbcSnbBiQuery12TrendingPostsResult convertSingleResult(ResultSet result) throws SQLException {
             long messageId = result.getLong(1);
-            long messageCreationDate = PostgresConverter.stringTimestampToEpoch(result, 2);
+            long messageCreationDate = PostgresConverter.convertLongTimestampToEpoch(result.getLong(2));
             String creatorFirstName = result.getString(3);
             String creatorLastName = result.getString(4);
             int likeCount = result.getInt(5);
