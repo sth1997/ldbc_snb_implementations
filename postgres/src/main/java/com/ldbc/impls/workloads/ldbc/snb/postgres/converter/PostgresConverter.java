@@ -5,10 +5,10 @@ import com.ldbc.impls.workloads.ldbc.snb.converter.Converter;
 import java.sql.Array;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
@@ -16,11 +16,21 @@ import java.util.stream.Collectors;
 
 public class PostgresConverter extends Converter {
 
+    final static String DATETIME_FORMAT = "yyyyMMddHHmmssSSS";
+    final static String DATE_FORMAT = "yyyyMMdd";
+
     @Override
     public String convertDateTime(Date date) {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'+00:00'");
+        final SimpleDateFormat sdf = new SimpleDateFormat(DATETIME_FORMAT);
         sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
-        return "'" + sdf.format(date) + "'::timestamp";
+        return sdf.format(date);
+    }
+
+    @Override
+    public String convertDate(Date date) {
+        final SimpleDateFormat sdf = new SimpleDateFormat(DATE_FORMAT);
+        sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
+        return sdf.format(date);
     }
 
     @Override
@@ -76,8 +86,48 @@ public class PostgresConverter extends Converter {
         return new_arr;
     }
 
+    private static long convertDateTimesToEpoch(long dateValue, String format) throws ParseException {
+        final SimpleDateFormat sdf = new SimpleDateFormat(format);
+        sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
+        return sdf.parse(Long.toString(dateValue)).toInstant().toEpochMilli();
+
+    }
+
+    /**
+     * Converts timestamp strings (in the format produced by DATAGEN) ({@value #DATAGEN_FORMAT})
+     * to a date.
+     *
+     * @param timestamp
+     * @return
+     */
+    public static long convertLongTimestampToEpoch(long timestamp) throws ParseException {
+        return convertDateTimesToEpoch(timestamp, DATETIME_FORMAT);
+    }
+
+    /**
+     * Converts timestamp strings (in the format produced by DATAGEN) ({@value #DATE_FORMAT})
+     * to a date.
+     *
+     * @param date
+     * @return
+     */
+    public static long convertLongDateToEpoch(long date) throws ParseException {
+        return convertDateTimesToEpoch(date, DATE_FORMAT);
+    }
+
+    public static int convertStartAndEndDateToLatency(long from, long to) throws ParseException {
+        long fromEpoch = convertDateTimesToEpoch(from, DATETIME_FORMAT);
+        long toEpoch = convertDateTimesToEpoch(to, DATETIME_FORMAT);
+        return (int)((toEpoch - fromEpoch) / 1000 / 60);
+    }
+
     public static long stringTimestampToEpoch(ResultSet r, int column) throws SQLException {
-        return r.getTimestamp(column, Calendar.getInstance(TimeZone.getTimeZone("GMT"))).getTime();
+        final long dateAsLong = r.getLong(column);
+        try {
+            return convertLongDateToEpoch(dateAsLong);
+        } catch (ParseException e) {
+            throw new SQLException(e);
+        }
     }
 
 }
