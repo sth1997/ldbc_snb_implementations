@@ -1,1 +1,3 @@
-java -Xmx10g -jar target/tinkerpop-0.0.1-SNAPSHOT-jar-with-dependencies.jar -batchSize 1000 -input ../../ldbc_snb_datagen/social_network -progReportPeriod 1
+#!/bin/bash
+
+java -cp target/tinkerpop-0.0.1-SNAPSHOT:target/tinkerpop-0.0.1-SNAPSHOT-jar-with-dependencies.jar com.ldbc.impls.workloads.ldbc.snb.tinkerpop.TinkerPopLoader -batchSize 50000 -input ../../ldbc_snb_datagen/social_network
