@@ -63,7 +63,7 @@ public class TinkerPopTrial {
     }
 
     public static void main(String[] args) throws IOException, ConfigurationException {
-        final PropertiesConfiguration conf = new PropertiesConfiguration(new File("tinkerpop/tinkerpop.properties"));
+        final PropertiesConfiguration conf = new PropertiesConfiguration(new File("tinkerpop.properties"));
 //        conf.addProperty("gremlin.graph", "org.janusgraph.core.JanusGraphFactory");
 //        conf.addProperty("storage.backend", "inmemory");
 //        conf.addProperty("storage.directory", "data/graph");

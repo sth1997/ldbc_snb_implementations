@@ -5,25 +5,16 @@ import com.ldbc.impls.workloads.ldbc.snb.tinkerpop.converter.TinkerPopConverter;
 import org.apache.commons.cli.*;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
-import org.apache.tinkerpop.gremlin.groovy.jsr223.GremlinGroovyScriptEngine;
-import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.T;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.VertexProperty;
 import org.apache.tinkerpop.gremlin.structure.io.IoCore;
-import org.apache.tinkerpop.gremlin.structure.util.GraphFactory;
-import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerFactory;
-import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
 import org.janusgraph.core.*;
-import org.janusgraph.core.schema.JanusGraphManagement;
 import org.janusgraph.core.schema.SchemaAction;
 import org.janusgraph.graphdb.database.management.ManagementSystem;
-import org.opencypher.gremlin.translation.TranslationFacade;
 
-import javax.script.Bindings;
-import javax.script.ScriptEngine;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -448,6 +439,7 @@ public class TinkerPopLoader {
         };
 
         final PropertiesConfiguration conf = new PropertiesConfiguration(new File("tinkerpop/tinkerpop.properties"));
+        System.out.println("Running with properties:" + conf.toString());
 //        conf.addProperty("gremlin.graph", "org.janusgraph.core.JanusGraphFactory");
 //        conf.addProperty("storage.backend", "inmemory");
 //        conf.addProperty("storage.directory", "data/graph");
