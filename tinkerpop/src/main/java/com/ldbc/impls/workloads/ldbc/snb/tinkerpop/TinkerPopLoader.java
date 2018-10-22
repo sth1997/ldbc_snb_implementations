@@ -437,9 +437,9 @@ public class TinkerPopLoader {
                 "tag_hasType_tagclass_0_0.csv",
                 "tagclass_isSubclassOf_tagclass_0_0.csv"
         };
-
-        final PropertiesConfiguration conf = new PropertiesConfiguration(new File("tinkerpop.properties"));
-        System.out.println("Running with properties:" + conf.toString());
+        System.out.println("Working Directory = " + System.getProperty("user.dir"));
+        final PropertiesConfiguration conf = new PropertiesConfiguration(new File("./tinkerpop.properties"));
+        System.out.println("Running with properties:" + conf.);
 //        conf.addProperty("gremlin.graph", "org.janusgraph.core.JanusGraphFactory");
 //        conf.addProperty("storage.backend", "inmemory");
 //        conf.addProperty("storage.directory", "data/graph");
