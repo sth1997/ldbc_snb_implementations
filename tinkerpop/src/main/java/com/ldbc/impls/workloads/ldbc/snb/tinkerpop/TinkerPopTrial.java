@@ -2,8 +2,10 @@ package com.ldbc.impls.workloads.ldbc.snb.tinkerpop;
 
 import com.tinkerpop.gremlin.java.GremlinPipeline;
 import org.apache.commons.cli.*;
+import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.tinkerpop.gremlin.groovy.jsr223.GremlinGroovyScriptEngine;
+import org.apache.tinkerpop.gremlin.process.traversal.P;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Graph;
@@ -20,7 +22,9 @@ import org.opencypher.gremlin.translation.TranslationFacade;
 
 import javax.script.Bindings;
 import javax.script.ScriptEngine;
+import javax.script.ScriptException;
 import javax.sound.midi.SysexMessage;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -35,20 +39,39 @@ import java.util.regex.Pattern;
 
 public class TinkerPopTrial {
 
-    private static final Logger logger =
-            Logger.getLogger(TinkerPopTrial.class.getName());
+    private static void runQuery(GraphTraversalSource g, String cypher) throws ScriptException {
+        String cypherWithIID = cypher.replaceAll("id:", "iid:").replaceAll("\\.id", "\\.iid");
+        String cypherWithIIDWithoutToInteger = cypherWithIID;
+        Pattern p = Pattern.compile("toInteger\\((.*)\\)");
+        Matcher m = p.matcher(cypherWithIIDWithoutToInteger);
+        if (m.find()) {
+            cypherWithIIDWithoutToInteger = m.replaceAll("$1");
+        }
+        TranslationFacade cfog = new TranslationFacade();
+        System.out.println(cypherWithIIDWithoutToInteger);
+        String gremlin = cfog.toGremlinGroovy(cypherWithIIDWithoutToInteger);
+        System.out.println(gremlin);
+        ScriptEngine engine = new GremlinGroovyScriptEngine();
+        Bindings bindings = engine.createBindings();
+        bindings.put("g", g);
+        Object o = engine.eval(gremlin, bindings);
+        GraphTraversal<Vertex, Map<String, Object>> a = (GraphTraversal<Vertex, Map<String, Object>>) o;
+        while (a.hasNext()) {
+            System.out.println("---");
+            System.out.println(a.next());
+        }
+    }
 
-    private static final long TX_MAX_RETRIES = 1000;
-
-
-    public static void main(String[] args) throws IOException {
-        final PropertiesConfiguration conf = new PropertiesConfiguration();
-        conf.addProperty("gremlin.graph", "org.janusgraph.core.JanusGraphFactory");
-        conf.addProperty("storage.backend", "berkeleyje");
-        conf.addProperty("storage.directory", "dataaa/graph");
+    public static void main(String[] args) throws IOException, ConfigurationException {
+        final PropertiesConfiguration conf = new PropertiesConfiguration(new File("tinkerpop/tinkerpop.properties"));
+//        conf.addProperty("gremlin.graph", "org.janusgraph.core.JanusGraphFactory");
+//        conf.addProperty("storage.backend", "inmemory");
+//        conf.addProperty("storage.directory", "data/graph");
         try (JanusGraph graph = JanusGraphFactory.open(conf)) {
 //        try (TinkerGraph graph = TinkerGraph.open(conf)) {
-//            graph.io(IoCore.gryo()).readGraph("sftiny_janus.gryo");
+            if (conf.getString("storage.backend").equals("inmemory")) {
+                graph.io(IoCore.gryo()).readGraph("sftiny_janus.gryo");
+            }
             GraphTraversalSource g = graph.traversal();
 //            GraphTraversal<Vertex, Vertex> aa = g.V().hasLabel("Person");
 //            while (aa.hasNext()) {
@@ -59,31 +82,38 @@ public class TinkerPopTrial {
 //                    System.out.println(vpIt.next());
 //                }
 //            }
-            String cypher = "MATCH path = allShortestPaths((person1:Person {id:32985348833679})-[:KNOWS*..15]-(person2:Person {id:2199023256862}))\n" +
-                    "WITH nodes(path) AS pathNodes\n" +
+            String cypher = "MATCH (:Person {id:19791209300143})-[:KNOWS]-(friend:Person)<-[:HAS_CREATOR]-(message)\n" +
+                    "WHERE message.creationDate <= 20121128000000000 AND (message:Post OR message:Comment)\n" +
                     "RETURN\n" +
-                    "  extract(n IN pathNodes | n.id) AS personIdsInPath,\n" +
-                    "  reduce(weight=0.0, idx IN range(1,size(pathNodes)-1) | extract(prev IN [pathNodes[idx-1]] | extract(curr IN [pathNodes[idx]] | weight + length((curr)<-[:HAS_CREATOR]-(:Comment)-[:REPLY_OF]->(:Post)-[:HAS_CREATOR]->(prev))*1.0 + length((prev)<-[:HAS_CREATOR]-(:Comment)-[:REPLY_OF]->(:Post)-[:HAS_CREATOR]->(curr))*1.0 + length((prev)-[:HAS_CREATOR]-(:Comment)-[:REPLY_OF]-(:Comment)-[:HAS_CREATOR]-(curr))*0.5) )[0][0]) AS pathWight\n" +
-                    "ORDER BY pathWight DESC";
-            String cypherWithIID = cypher.replaceAll("id:", "iid:").replaceAll("\\.id", "\\.iid");
-            String cypherWithIIDWithoutToInteger = cypherWithIID;
-            Pattern p = Pattern.compile("toInteger\\((.*)\\)");
-            Matcher m = p.matcher(cypherWithIIDWithoutToInteger);
-            if (m.find()) {
-                cypherWithIIDWithoutToInteger = m.replaceAll("$1");
-            }
-            TranslationFacade cfog = new TranslationFacade();
-            System.out.println(cypherWithIIDWithoutToInteger);
-            String gremlin = cfog.toGremlinGroovy(cypherWithIIDWithoutToInteger);
-            System.out.println(gremlin);
-            ScriptEngine engine = new GremlinGroovyScriptEngine();
-            Bindings bindings = engine.createBindings();
-            bindings.put("g", g);
-            Object o = engine.eval(gremlin, bindings);
-            GraphTraversal<Vertex, Map<String, Object>> a = (GraphTraversal<Vertex, Map<String, Object>>) o;
-            while (a.hasNext()) {
-                System.out.println("---");
-                System.out.println(a.next());
+                    "  friend.id AS personId,\n" +
+                    "  friend.firstName AS personFirstName,\n" +
+                    "  friend.lastName AS personLastName,\n" +
+                    "  message.id AS postOrCommentId,\n" +
+                    "  CASE exists(message.content)\n" +
+                    "    WHEN true THEN message.content\n" +
+                    "    ELSE message.imageFile\n" +
+                    "  END AS postOrCommentContent,\n" +
+                    "  message.creationDate AS postOrCommentCreationDate\n" +
+                    "ORDER BY postOrCommentCreationDate DESC, toInteger(postOrCommentId) ASC\n" +
+                    "LIMIT 20";
+            String cypher2 = "MATCH (p:Person )-[:KNOWS]-(friend:Person)\n" +
+                    "RETURN friend\n" +
+                    "ORDER BY p.id, friend.id";
+            String cypher3 = "MATCH (p:Person {id:8796093022246})\n" +
+                    "RETURN p";
+            runQuery(g, cypher);
+            runQuery(g, cypher2);
+            runQuery(g, cypher3);
+            Iterator<Vertex> it = g.V().hasLabel("Person").has("iid", P.eq(8796093022246L));
+            while (it.hasNext()) {
+                Vertex a = it.next();
+                System.out.println(a);
+                Iterator<VertexProperty<String>> vpIt = a.properties("language");
+                while (vpIt.hasNext()) {
+                    VertexProperty<String> vp = vpIt.next();
+                    System.out.print(vp.value() + " ");
+                }
+                System.out.println();
             }
         } catch (Exception e) {
             System.out.println("Exception: " + e);

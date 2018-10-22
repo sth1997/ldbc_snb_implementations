@@ -1,6 +1,9 @@
 package com.ldbc.impls.workloads.ldbc.snb.tinkerpop;
 
+import com.ldbc.impls.workloads.ldbc.snb.converter.Converter;
+import com.ldbc.impls.workloads.ldbc.snb.tinkerpop.converter.TinkerPopConverter;
 import org.apache.commons.cli.*;
+import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.tinkerpop.gremlin.groovy.jsr223.GremlinGroovyScriptEngine;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
@@ -21,6 +24,7 @@ import org.opencypher.gremlin.translation.TranslationFacade;
 
 import javax.script.Bindings;
 import javax.script.ScriptEngine;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -56,6 +60,7 @@ public class TinkerPopLoader {
         List<String> lines = Files.readAllLines(filePath);
         colNames = lines.get(0).split("\\|");
         long lineCount = 0;
+        Converter converter = new TinkerPopConverter();
 
         // For progress reporting
         long startTime = System.currentTimeMillis();
@@ -70,13 +75,13 @@ public class TinkerPopLoader {
 
             for (int j = 0; j < colVals.length; ++j) {
                 if (colNames[j].equals("id")) {
-                    propertiesMap.put("iid", entityName + ":" + colVals[j]);
+                    propertiesMap.put("iid", Long.parseLong(colVals[j]));
                 } else if (colNames[j].equals("birthday")) {
-                    propertiesMap.put(colNames[j], String.valueOf(
-                            birthdayDateFormat.parse(colVals[j]).getTime()));
+                    Date birthDate = birthdayDateFormat.parse(colVals[j]);
+                    propertiesMap.put(colNames[j], Long.parseLong(converter.convertDate(birthDate)));
                 } else if (colNames[j].equals("creationDate")) {
-                    propertiesMap.put(colNames[j], String.valueOf(
-                            creationDateDateFormat.parse(colVals[j]).getTime()));
+                    Date creationDate = creationDateDateFormat.parse(colVals[j]);
+                    propertiesMap.put(colNames[j], Long.parseLong(converter.convertDateTime(creationDate)));
                 } else {
                     propertiesMap.put(colNames[j], colVals[j]);
                 }
@@ -144,7 +149,7 @@ public class TinkerPopLoader {
             if (!colVals[0].equals(previousId)) {
                 GraphTraversalSource g = graph.traversal();
                 vertex =
-                        g.V().has("iid", entityName + ":" + colVals[0]).next();
+                        g.V().has("iid", Long.parseLong(colVals[0])).next();
                 previousId = colVals[0];
             }
 
@@ -191,7 +196,7 @@ public class TinkerPopLoader {
         joinDateDateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
         String fileNameParts[] = filePath.getFileName().toString().split("_");
         String v1EntityName = fileNameParts[0].substring(0, 1).toUpperCase() + fileNameParts[0].substring(1);
-        String edgeLabel = splitCamelCase(fileNameParts[1]).replaceAll(" ","_").toUpperCase();
+        String edgeLabel = splitCamelCase(fileNameParts[1]).replaceAll(" ", "_").toUpperCase();
         String v2EntityName = fileNameParts[2].substring(0, 1).toUpperCase() + fileNameParts[2].substring(1);
 
         List<String> lines = Files.readAllLines(filePath);
@@ -202,7 +207,7 @@ public class TinkerPopLoader {
         long startTime = System.currentTimeMillis();
         long nextProgReportTime = startTime + progReportPeriod * 1000;
         long lastLineCount = 0;
-
+        Converter converter = new TinkerPopConverter();
         Vertex vertex1 = null;
         String previousId = "";
 
@@ -214,20 +219,19 @@ public class TinkerPopLoader {
             GraphTraversalSource g = graph.traversal();
             if (!colVals[0].equals(previousId)) {
                 vertex1 =
-                        g.V().has("iid", v1EntityName + ":" + colVals[0]).next();
+                        g.V().has("iid", Long.parseLong(colVals[0])).next();
                 previousId = colVals[0];
             }
             Vertex vertex2 =
-                    g.V().has("iid", v2EntityName + ":" + colVals[1]).next();
+                    g.V().has("iid", Long.parseLong(colVals[1])).next();
 
             propertiesMap = new HashMap<>();
             for (int j = 2; j < colVals.length; ++j) {
-                if (colNames[j].equals("creationDate")) {
-                    propertiesMap.put(colNames[j], String.valueOf(
-                            creationDateDateFormat.parse(colVals[j]).getTime()));
-                } else if (colNames[j].equals("joinDate")) {
-                    propertiesMap.put(colNames[j], String.valueOf(
-                            joinDateDateFormat.parse(colVals[j]).getTime()));
+
+                if (colNames[j].equals("creationDate") || colNames[j].equals("joinDate")) {
+
+                    Date date = creationDateDateFormat.parse(colVals[j]);
+                    propertiesMap.put(colNames[j], Long.parseLong(converter.convertDate(date)));
                 } else {
                     propertiesMap.put(colNames[j], colVals[j]);
                 }
@@ -279,7 +283,7 @@ public class TinkerPopLoader {
         );
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, ConfigurationException {
         Options options = new Options();
 //        options.addOption("C", "locator", true,
 //                "IP address of the server server.");
@@ -443,12 +447,12 @@ public class TinkerPopLoader {
                 "tagclass_isSubclassOf_tagclass_0_0.csv"
         };
 
-        final PropertiesConfiguration conf = new PropertiesConfiguration();
-        conf.addProperty("gremlin.graph", "org.janusgraph.core.JanusGraphFactory");
-        conf.addProperty("storage.backend", "berkeleyje");
-        conf.addProperty("storage.directory", "data/graph");
+        final PropertiesConfiguration conf = new PropertiesConfiguration(new File("tinkerpop/tinkerpop.properties"));
+//        conf.addProperty("gremlin.graph", "org.janusgraph.core.JanusGraphFactory");
+//        conf.addProperty("storage.backend", "inmemory");
+//        conf.addProperty("storage.directory", "data/graph");
         try (JanusGraph graph = JanusGraphFactory.open(conf)) {
-//            try (TinkerGraph graph = TinkerGraph.open(conf)) {
+//        try (TinkerGraph graph = TinkerGraph.open(conf)) {
             if (JanusGraph.class.isInstance(graph)) {
                 JanusGraph janusGraph = JanusGraph.class.cast(graph);
                 try {
@@ -564,7 +568,22 @@ public class TinkerPopLoader {
             System.out.println(String.format(
                     "Time Elapsed: %03dm.%02ds",
                     (timeElapsed / 1000) / 60, (timeElapsed / 1000) % 60));
-            graph.io(IoCore.gryo()).writeGraph("sftiny_janus.gryo");
+
+            if (conf.getString("storage.backend").equals("inmemory")) {
+                graph.io(IoCore.gryo()).writeGraph("sftiny_janus.gryo");
+            }
+
+            Iterator<Vertex> it = graph.traversal().V().hasLabel("Person");
+            while (it.hasNext()) {
+                Vertex a = it.next();
+                System.out.println(a.property("iid"));
+                Iterator<VertexProperty<String>> vpIt = a.properties("language");
+                while (vpIt.hasNext()) {
+                    VertexProperty<String> vp = vpIt.next();
+                    System.out.print(vp.value() + " ");
+                }
+                System.out.println();
+            }
 //            String cypher = "MATCH (person:person) " +
 //                    "RETURN person";
 //            TranslationFacade cfog = new TranslationFacade();
