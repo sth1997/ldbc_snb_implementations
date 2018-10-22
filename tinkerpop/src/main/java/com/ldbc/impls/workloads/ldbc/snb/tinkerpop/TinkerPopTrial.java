@@ -55,7 +55,8 @@ public class TinkerPopTrial {
         Bindings bindings = engine.createBindings();
         bindings.put("g", g);
         Object o = engine.eval(gremlin, bindings);
-        GraphTraversal<Vertex, Map<Object, Object>> a = (GraphTraversal<Vertex, Map<Object, Object>>) o;
+        System.out.println("Return type: " + o.getClass().toGenericString());
+        GraphTraversal a = (GraphTraversal) o;
         while (a.hasNext()) {
             System.out.println("---");
             System.out.println(a.next().toString());
