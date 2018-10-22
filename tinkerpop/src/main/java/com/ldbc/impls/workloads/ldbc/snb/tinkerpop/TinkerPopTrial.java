@@ -55,10 +55,10 @@ public class TinkerPopTrial {
         Bindings bindings = engine.createBindings();
         bindings.put("g", g);
         Object o = engine.eval(gremlin, bindings);
-        GraphTraversal<Vertex, Map<String, Object>> a = (GraphTraversal<Vertex, Map<String, Object>>) o;
+        GraphTraversal<Vertex, Map<Object, Object>> a = (GraphTraversal<Vertex, Map<Object, Object>>) o;
         while (a.hasNext()) {
             System.out.println("---");
-            System.out.println(a.next());
+            System.out.println(a.next().toString());
         }
     }
 
@@ -82,20 +82,7 @@ public class TinkerPopTrial {
 //                    System.out.println(vpIt.next());
 //                }
 //            }
-            String cypher = "MATCH (:Person {id:19791209300143})-[:KNOWS]-(friend:Person)<-[:HAS_CREATOR]-(message)\n" +
-                    "WHERE message.creationDate <= 20121128000000000 AND (message:Post OR message:Comment)\n" +
-                    "RETURN\n" +
-                    "  friend.id AS personId,\n" +
-                    "  friend.firstName AS personFirstName,\n" +
-                    "  friend.lastName AS personLastName,\n" +
-                    "  message.id AS postOrCommentId,\n" +
-                    "  CASE exists(message.content)\n" +
-                    "    WHEN true THEN message.content\n" +
-                    "    ELSE message.imageFile\n" +
-                    "  END AS postOrCommentContent,\n" +
-                    "  message.creationDate AS postOrCommentCreationDate\n" +
-                    "ORDER BY postOrCommentCreationDate DESC, toInteger(postOrCommentId) ASC\n" +
-                    "LIMIT 20";
+            String cypher = new String(Files.readAllBytes(Paths.get("query.txt")));
             String cypher2 = "MATCH (p:Person )-[:KNOWS]-(friend:Person)\n" +
                     "RETURN friend\n" +
                     "ORDER BY p.id, friend.id";
