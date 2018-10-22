@@ -439,7 +439,6 @@ public class TinkerPopLoader {
         };
         System.out.println("Working Directory = " + System.getProperty("user.dir"));
         final PropertiesConfiguration conf = new PropertiesConfiguration(new File("./tinkerpop.properties"));
-        System.out.println("Running with properties:" + conf.);
 //        conf.addProperty("gremlin.graph", "org.janusgraph.core.JanusGraphFactory");
 //        conf.addProperty("storage.backend", "inmemory");
 //        conf.addProperty("storage.directory", "data/graph");
