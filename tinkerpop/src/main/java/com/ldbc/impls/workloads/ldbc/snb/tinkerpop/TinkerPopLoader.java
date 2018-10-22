@@ -438,7 +438,7 @@ public class TinkerPopLoader {
                 "tagclass_isSubclassOf_tagclass_0_0.csv"
         };
 
-        final PropertiesConfiguration conf = new PropertiesConfiguration(new File("tinkerpop/tinkerpop.properties"));
+        final PropertiesConfiguration conf = new PropertiesConfiguration(new File("tinkerpop.properties"));
         System.out.println("Running with properties:" + conf.toString());
 //        conf.addProperty("gremlin.graph", "org.janusgraph.core.JanusGraphFactory");
 //        conf.addProperty("storage.backend", "inmemory");
