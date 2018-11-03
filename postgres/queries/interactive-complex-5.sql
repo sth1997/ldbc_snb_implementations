@@ -1,8 +1,8 @@
 WITH
 q0 AS
- (-- GetVertices
+ (-- GetVerticesWithGTop
   SELECT
-    p_personid AS "person#14",
+    ROW(0, p_personid)::vertex_type AS "person#14",
     "p_personid" AS "person.id#14"
   FROM person),
 q1 AS
@@ -11,15 +11,15 @@ q1 AS
   WHERE ("person.id#14" = :personId)),
 q2 AS
  (-- GetEdgesWithGTop
-  SELECT "k_person1id" AS "current_from", ROW("k_person1id", "k_person2id")::edge_type AS "edge_id", "k_person2id" AS "friend#4"
-    FROM "knows"),
+  SELECT ROW(0, edgeTable."k_person1id")::vertex_type AS "current_from", ROW(0, edgeTable."k_person1id", edgeTable."k_person2id")::edge_type AS "edge_id", ROW(0, edgeTable."k_person2id")::vertex_type AS "friend#4"
+    FROM "knows" edgeTable),
 q3 AS
  (-- GetEdgesWithGTop
-  SELECT "k_person1id" AS "friend#4", ROW("k_person1id", "k_person2id")::edge_type AS "edge_id", "k_person2id" AS "current_from"
-    FROM "knows"),
+  SELECT ROW(0, edgeTable."k_person1id")::vertex_type AS "friend#4", ROW(0, edgeTable."k_person1id", edgeTable."k_person2id")::edge_type AS "edge_id", ROW(0, edgeTable."k_person2id")::vertex_type AS "current_from"
+    FROM "knows" edgeTable),
 q4 AS
  (-- UnionAll
-  SELECT * FROM q2
+  SELECT "current_from", "edge_id", "friend#4" FROM q2
   UNION ALL
   SELECT "current_from", "edge_id", "friend#4" FROM q3),
 q5 AS
@@ -54,9 +54,9 @@ q5 AS
   FROM recursive_table
   WHERE array_length("_e208#0") >= 1),
 q6 AS
- (-- GetVertices
+ (-- GetVerticesWithGTop
   SELECT
-    p_personid AS "friend#4"
+    ROW(0, p_personid)::vertex_type AS "friend#4"
   FROM person),
 q7 AS
  (-- EquiJoinLike
@@ -67,10 +67,10 @@ q7 AS
   ON left_query."friend#4" = right_query."friend#4"),
 q8 AS
  (-- GetEdgesWithGTop
-  SELECT "fp_forumid" AS "forum#4", ROW("fp_forumid", "fp_personid")::edge_type AS "membership#0", "fp_personid" AS "friend#4",
-    "forum"."f_forumid" AS "forum.id#5", "forum"."f_title" AS "forum.title#2", "forum_person"."fp_joindate" AS "membership.joinDate#0"
-    FROM "forum_person"
-      JOIN "forum" ON ("forum_person"."fp_forumid" = "forum"."f_forumid")),
+  SELECT ROW(3, edgeTable."fp_forumid")::vertex_type AS "forum#4", ROW(4, edgeTable."fp_forumid", edgeTable."fp_personid")::edge_type AS "membership#0", ROW(0, edgeTable."fp_personid")::vertex_type AS "friend#4",
+    fromTable."f_forumid" AS "forum.id#5", fromTable."f_title" AS "forum.title#2", edgeTable."fp_joindate" AS "membership.joinDate#0"
+    FROM "forum_person" edgeTable
+      JOIN "forum" fromTable ON (fromTable."f_forumid" = edgeTable."fp_forumid")),
 q9 AS
  (-- EquiJoinLike
   SELECT left_query."person#14", left_query."person.id#14", left_query."_e208#0", left_query."friend#4", right_query."forum.title#2", right_query."forum#4", right_query."membership#0", right_query."membership.joinDate#0", right_query."forum.id#5" FROM
@@ -95,12 +95,14 @@ q13 AS
   SELECT DISTINCT * FROM q12 AS subquery),
 q14 AS
  (-- GetEdgesWithGTop
-  SELECT "m_messageid" AS "post#5", ROW("m_messageid", "m_creatorid")::edge_type AS "_e209#0", "m_creatorid" AS "friend#4"
-    FROM "message"),
+  SELECT ROW(6, fromTable."m_messageid")::vertex_type AS "post#5", ROW(8, fromTable."m_messageid", fromTable."m_creatorid")::edge_type AS "_e209#0", ROW(0, fromTable."m_creatorid")::vertex_type AS "friend#4"
+    FROM "message" fromTable
+  WHERE (fromTable."m_c_replyof" IS NULL)),
 q15 AS
  (-- GetEdgesWithGTop
-  SELECT "m_ps_forumid" AS "forum#4", ROW("m_ps_forumid", "m_messageid")::edge_type AS "_e210#0", "m_messageid" AS "post#5"
-    FROM "message"),
+  SELECT ROW(3, toTable."m_ps_forumid")::vertex_type AS "forum#4", ROW(5, toTable."m_ps_forumid", toTable."m_messageid")::edge_type AS "_e210#0", ROW(6, toTable."m_messageid")::vertex_type AS "post#5"
+    FROM "message" toTable
+  WHERE (toTable."m_c_replyof" IS NULL)),
 q16 AS
  (-- EquiJoinLike
   SELECT left_query."post#5", left_query."_e209#0", left_query."friend#4", right_query."forum#4", right_query."_e210#0" FROM

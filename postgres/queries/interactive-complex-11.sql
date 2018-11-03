@@ -1,8 +1,8 @@
 WITH
 q0 AS
- (-- GetVertices
+ (-- GetVerticesWithGTop
   SELECT
-    p_personid AS "person#17",
+    ROW(0, p_personid)::vertex_type AS "person#17",
     "p_personid" AS "person.id#17"
   FROM person),
 q1 AS
@@ -11,15 +11,15 @@ q1 AS
   WHERE ("person.id#17" = :personId)),
 q2 AS
  (-- GetEdgesWithGTop
-  SELECT "k_person1id" AS "current_from", ROW("k_person1id", "k_person2id")::edge_type AS "edge_id", "k_person2id" AS "friend#7"
-    FROM "knows"),
+  SELECT ROW(0, edgeTable."k_person1id")::vertex_type AS "current_from", ROW(0, edgeTable."k_person1id", edgeTable."k_person2id")::edge_type AS "edge_id", ROW(0, edgeTable."k_person2id")::vertex_type AS "friend#7"
+    FROM "knows" edgeTable),
 q3 AS
  (-- GetEdgesWithGTop
-  SELECT "k_person1id" AS "friend#7", ROW("k_person1id", "k_person2id")::edge_type AS "edge_id", "k_person2id" AS "current_from"
-    FROM "knows"),
+  SELECT ROW(0, edgeTable."k_person1id")::vertex_type AS "friend#7", ROW(0, edgeTable."k_person1id", edgeTable."k_person2id")::edge_type AS "edge_id", ROW(0, edgeTable."k_person2id")::vertex_type AS "current_from"
+    FROM "knows" edgeTable),
 q4 AS
  (-- UnionAll
-  SELECT * FROM q2
+  SELECT "current_from", "edge_id", "friend#7" FROM q2
   UNION ALL
   SELECT "current_from", "edge_id", "friend#7" FROM q3),
 q5 AS
@@ -54,9 +54,9 @@ q5 AS
   FROM recursive_table
   WHERE array_length("_e237#0") >= 1),
 q6 AS
- (-- GetVertices
+ (-- GetVerticesWithGTop
   SELECT
-    p_personid AS "friend#7",
+    ROW(0, p_personid)::vertex_type AS "friend#7",
     "p_personid" AS "friend.id#5",
     "p_firstname" AS "friend.firstName#4",
     "p_lastname" AS "friend.lastName#5"
@@ -85,50 +85,130 @@ q11 AS
   SELECT DISTINCT * FROM q10 AS subquery),
 q12 AS
  (-- GetEdgesWithGTop
-  SELECT "pc_personid" AS "friend#7", ROW("pc_personid", "pc_organisationid")::edge_type AS "workAt#1", "pc_organisationid" AS "company#1",
-    "organisation"."o_name" AS "company.name#1", "person_company"."pc_workfrom" AS "workAt.workFrom#1"
-    FROM "person_company"
-      JOIN "organisation" ON ("person_company"."pc_organisationid" = "organisation"."o_organisationid")),
+  SELECT ROW(0, edgeTable."pc_personid")::vertex_type AS "friend#7", ROW(12, edgeTable."pc_personid", edgeTable."pc_organisationid")::edge_type AS "workAt#1", ROW(1, edgeTable."pc_organisationid")::vertex_type AS "company#1",
+    toTable."o_name" AS "company.name#1", edgeTable."pc_workfrom" AS "workAt.workFrom#1"
+    FROM "person_company" edgeTable
+      JOIN "organisation" toTable ON (edgeTable."pc_organisationid" = toTable."o_organisationid")
+  WHERE (toTable."o_type" :: text ~ 'university')),
 q13 AS
  (-- GetEdgesWithGTop
-  SELECT "o_organisationid" AS "company#1", ROW("o_organisationid", "o_placeid")::edge_type AS "_e239#0", "o_placeid" AS "_e238#0",
-    "place"."pl_name" AS "_e238.name#0"
-    FROM "organisation"
-      JOIN "place" ON ("organisation"."o_placeid" = "place"."pl_placeid")),
+  SELECT ROW(0, edgeTable."pc_personid")::vertex_type AS "friend#7", ROW(12, edgeTable."pc_personid", edgeTable."pc_organisationid")::edge_type AS "workAt#1", ROW(1, edgeTable."pc_organisationid")::vertex_type AS "company#1",
+    toTable."o_name" AS "company.name#1", edgeTable."pc_workfrom" AS "workAt.workFrom#1"
+    FROM "person_company" edgeTable
+      JOIN "organisation" toTable ON (edgeTable."pc_organisationid" = toTable."o_organisationid")
+  WHERE (toTable."o_type" :: text ~ 'company')),
 q14 AS
+ (-- UnionAll
+  SELECT "friend#7", "workAt#1", "company#1", "company.name#1", "workAt.workFrom#1" FROM q12
+  UNION ALL
+  SELECT "friend#7", "workAt#1", "company#1", "company.name#1", "workAt.workFrom#1" FROM q13),
+q15 AS
+ (-- GetEdgesWithGTop
+  SELECT ROW(1, fromTable."o_organisationid")::vertex_type AS "company#1", ROW(11, fromTable."o_organisationid", fromTable."o_placeid")::edge_type AS "_e239#0", ROW(2, fromTable."o_placeid")::vertex_type AS "_e238#0",
+    toTable."pl_name" AS "_e238.name#0"
+    FROM "organisation" fromTable
+      JOIN "place" toTable ON (fromTable."o_placeid" = toTable."pl_placeid")
+  WHERE (fromTable."o_type" :: text ~ 'university') AND
+        (toTable."pl_type" :: text ~ 'city')),
+q16 AS
+ (-- GetEdgesWithGTop
+  SELECT ROW(1, fromTable."o_organisationid")::vertex_type AS "company#1", ROW(11, fromTable."o_organisationid", fromTable."o_placeid")::edge_type AS "_e239#0", ROW(2, fromTable."o_placeid")::vertex_type AS "_e238#0",
+    toTable."pl_name" AS "_e238.name#0"
+    FROM "organisation" fromTable
+      JOIN "place" toTable ON (fromTable."o_placeid" = toTable."pl_placeid")
+  WHERE (fromTable."o_type" :: text ~ 'university') AND
+        (toTable."pl_type" :: text ~ 'country')),
+q17 AS
+ (-- UnionAll
+  SELECT "company#1", "_e239#0", "_e238#0", "_e238.name#0" FROM q15
+  UNION ALL
+  SELECT "company#1", "_e239#0", "_e238#0", "_e238.name#0" FROM q16),
+q18 AS
+ (-- GetEdgesWithGTop
+  SELECT ROW(1, fromTable."o_organisationid")::vertex_type AS "company#1", ROW(11, fromTable."o_organisationid", fromTable."o_placeid")::edge_type AS "_e239#0", ROW(2, fromTable."o_placeid")::vertex_type AS "_e238#0",
+    toTable."pl_name" AS "_e238.name#0"
+    FROM "organisation" fromTable
+      JOIN "place" toTable ON (fromTable."o_placeid" = toTable."pl_placeid")
+  WHERE (fromTable."o_type" :: text ~ 'university') AND
+        (toTable."pl_type" :: text ~ 'continent')),
+q19 AS
+ (-- UnionAll
+  SELECT "company#1", "_e239#0", "_e238#0", "_e238.name#0" FROM q17
+  UNION ALL
+  SELECT "company#1", "_e239#0", "_e238#0", "_e238.name#0" FROM q18),
+q20 AS
+ (-- GetEdgesWithGTop
+  SELECT ROW(1, fromTable."o_organisationid")::vertex_type AS "company#1", ROW(11, fromTable."o_organisationid", fromTable."o_placeid")::edge_type AS "_e239#0", ROW(2, fromTable."o_placeid")::vertex_type AS "_e238#0",
+    toTable."pl_name" AS "_e238.name#0"
+    FROM "organisation" fromTable
+      JOIN "place" toTable ON (fromTable."o_placeid" = toTable."pl_placeid")
+  WHERE (fromTable."o_type" :: text ~ 'company') AND
+        (toTable."pl_type" :: text ~ 'city')),
+q21 AS
+ (-- UnionAll
+  SELECT "company#1", "_e239#0", "_e238#0", "_e238.name#0" FROM q19
+  UNION ALL
+  SELECT "company#1", "_e239#0", "_e238#0", "_e238.name#0" FROM q20),
+q22 AS
+ (-- GetEdgesWithGTop
+  SELECT ROW(1, fromTable."o_organisationid")::vertex_type AS "company#1", ROW(11, fromTable."o_organisationid", fromTable."o_placeid")::edge_type AS "_e239#0", ROW(2, fromTable."o_placeid")::vertex_type AS "_e238#0",
+    toTable."pl_name" AS "_e238.name#0"
+    FROM "organisation" fromTable
+      JOIN "place" toTable ON (fromTable."o_placeid" = toTable."pl_placeid")
+  WHERE (fromTable."o_type" :: text ~ 'company') AND
+        (toTable."pl_type" :: text ~ 'country')),
+q23 AS
+ (-- UnionAll
+  SELECT "company#1", "_e239#0", "_e238#0", "_e238.name#0" FROM q21
+  UNION ALL
+  SELECT "company#1", "_e239#0", "_e238#0", "_e238.name#0" FROM q22),
+q24 AS
+ (-- GetEdgesWithGTop
+  SELECT ROW(1, fromTable."o_organisationid")::vertex_type AS "company#1", ROW(11, fromTable."o_organisationid", fromTable."o_placeid")::edge_type AS "_e239#0", ROW(2, fromTable."o_placeid")::vertex_type AS "_e238#0",
+    toTable."pl_name" AS "_e238.name#0"
+    FROM "organisation" fromTable
+      JOIN "place" toTable ON (fromTable."o_placeid" = toTable."pl_placeid")
+  WHERE (fromTable."o_type" :: text ~ 'company') AND
+        (toTable."pl_type" :: text ~ 'continent')),
+q25 AS
+ (-- UnionAll
+  SELECT "company#1", "_e239#0", "_e238#0", "_e238.name#0" FROM q23
+  UNION ALL
+  SELECT "company#1", "_e239#0", "_e238#0", "_e238.name#0" FROM q24),
+q26 AS
  (-- EquiJoinLike
   SELECT left_query."friend#7", left_query."workAt#1", left_query."company#1", left_query."company.name#1", left_query."workAt.workFrom#1", right_query."_e239#0", right_query."_e238#0", right_query."_e238.name#0" FROM
-    q12 AS left_query
+    q14 AS left_query
     INNER JOIN
-    q13 AS right_query
+    q25 AS right_query
   ON left_query."company#1" = right_query."company#1"),
-q15 AS
+q27 AS
  (-- Selection
-  SELECT * FROM q14 AS subquery
+  SELECT * FROM q26 AS subquery
   WHERE ("_e238.name#0" = :countryName)),
-q16 AS
+q28 AS
  (-- AllDifferent
-  SELECT * FROM q15 AS subquery
+  SELECT * FROM q27 AS subquery
     WHERE is_unique(ARRAY[]::edge_type[] || "_e239#0" || "workAt#1")),
-q17 AS
+q29 AS
  (-- EquiJoinLike
   SELECT left_query."friend#7", left_query."friend.id#5", left_query."friend.firstName#4", left_query."friend.lastName#5", right_query."_e238.name#0", right_query."_e238#0", right_query."workAt#1", right_query."company.name#1", right_query."company#1", right_query."_e239#0", right_query."workAt.workFrom#1" FROM
     q11 AS left_query
     INNER JOIN
-    q16 AS right_query
+    q28 AS right_query
   ON left_query."friend#7" = right_query."friend#7"),
-q18 AS
+q30 AS
  (-- Selection
-  SELECT * FROM q17 AS subquery
+  SELECT * FROM q29 AS subquery
   WHERE ("workAt.workFrom#1" < :workFromYear)),
-q19 AS
+q31 AS
  (-- Projection
   SELECT "friend.id#5" AS "personId#4", "friend.firstName#4" AS "personFirstName#4", "friend.lastName#5" AS "personLastName#4", "company.name#1" AS "organizationName#0", "workAt.workFrom#1" AS "organizationWorkFromYear#0"
-    FROM q18 AS subquery),
-q20 AS
+    FROM q30 AS subquery),
+q32 AS
  (-- SortAndTop
-  SELECT * FROM q19 AS subquery
+  SELECT * FROM q31 AS subquery
     ORDER BY "organizationWorkFromYear#0" ASC NULLS FIRST, ("personId#4")::BIGINT ASC NULLS FIRST, "organizationName#0" DESC NULLS LAST
     LIMIT 10)
 SELECT "personId#4" AS "personId", "personFirstName#4" AS "personFirstName", "personLastName#4" AS "personLastName", "organizationName#0" AS "organizationName", "organizationWorkFromYear#0" AS "organizationWorkFromYear"
-  FROM q20 AS subquery
+  FROM q32 AS subquery

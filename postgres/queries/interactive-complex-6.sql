@@ -1,8 +1,8 @@
 WITH
 q0 AS
- (-- GetVertices
+ (-- GetVerticesWithGTop
   SELECT
-    p_personid AS "person#15",
+    ROW(0, p_personid)::vertex_type AS "person#15",
     "p_personid" AS "person.id#15"
   FROM person),
 q1 AS
@@ -11,15 +11,15 @@ q1 AS
   WHERE ("person.id#15" = :personId)),
 q2 AS
  (-- GetEdgesWithGTop
-  SELECT "k_person1id" AS "current_from", ROW("k_person1id", "k_person2id")::edge_type AS "edge_id", "k_person2id" AS "friend#5"
-    FROM "knows"),
+  SELECT ROW(0, edgeTable."k_person1id")::vertex_type AS "current_from", ROW(0, edgeTable."k_person1id", edgeTable."k_person2id")::edge_type AS "edge_id", ROW(0, edgeTable."k_person2id")::vertex_type AS "friend#5"
+    FROM "knows" edgeTable),
 q3 AS
  (-- GetEdgesWithGTop
-  SELECT "k_person1id" AS "friend#5", ROW("k_person1id", "k_person2id")::edge_type AS "edge_id", "k_person2id" AS "current_from"
-    FROM "knows"),
+  SELECT ROW(0, edgeTable."k_person1id")::vertex_type AS "friend#5", ROW(0, edgeTable."k_person1id", edgeTable."k_person2id")::edge_type AS "edge_id", ROW(0, edgeTable."k_person2id")::vertex_type AS "current_from"
+    FROM "knows" edgeTable),
 q4 AS
  (-- UnionAll
-  SELECT * FROM q2
+  SELECT "current_from", "edge_id", "friend#5" FROM q2
   UNION ALL
   SELECT "current_from", "edge_id", "friend#5" FROM q3),
 q5 AS
@@ -54,9 +54,9 @@ q5 AS
   FROM recursive_table
   WHERE array_length("_e211#0") >= 1),
 q6 AS
- (-- GetVertices
+ (-- GetVerticesWithGTop
   SELECT
-    p_personid AS "friend#5"
+    ROW(0, p_personid)::vertex_type AS "friend#5"
   FROM person),
 q7 AS
  (-- EquiJoinLike
@@ -67,14 +67,17 @@ q7 AS
   ON left_query."friend#5" = right_query."friend#5"),
 q8 AS
  (-- GetEdgesWithGTop
-  SELECT "m_messageid" AS "friendPost#0", ROW("m_messageid", "m_creatorid")::edge_type AS "_e212#0", "m_creatorid" AS "friend#5"
-    FROM "message"),
+  SELECT ROW(6, fromTable."m_messageid")::vertex_type AS "friendPost#0", ROW(8, fromTable."m_messageid", fromTable."m_creatorid")::edge_type AS "_e212#0", ROW(0, fromTable."m_creatorid")::vertex_type AS "friend#5"
+    FROM "message" fromTable
+  WHERE (fromTable."m_c_replyof" IS NULL)),
 q9 AS
  (-- GetEdgesWithGTop
-  SELECT "mt_messageid" AS "friendPost#0", ROW("mt_messageid", "mt_tagid")::edge_type AS "_e213#0", "mt_tagid" AS "knownTag#0",
-    "tag"."t_name" AS "knownTag.name#0"
-    FROM "message_tag"
-      JOIN "tag" ON ("message_tag"."mt_tagid" = "tag"."t_tagid")),
+  SELECT ROW(6, edgeTable."mt_messageid")::vertex_type AS "friendPost#0", ROW(6, edgeTable."mt_messageid", edgeTable."mt_tagid")::edge_type AS "_e213#0", ROW(4, edgeTable."mt_tagid")::vertex_type AS "knownTag#0",
+    toTable."t_name" AS "knownTag.name#0"
+    FROM "message_tag" edgeTable
+      JOIN "tag" toTable ON (edgeTable."mt_tagid" = toTable."t_tagid")
+      JOIN "message" fromTable ON (fromTable."m_messageid" = edgeTable."mt_messageid")
+  WHERE (fromTable."m_c_replyof" IS NULL)),
 q10 AS
  (-- EquiJoinLike
   SELECT left_query."friendPost#0", left_query."_e212#0", left_query."friend#5", right_query."_e213#0", right_query."knownTag#0", right_query."knownTag.name#0" FROM
@@ -103,92 +106,122 @@ q14 AS
   WHERE NOT(("person#15" = "friend#5"))),
 q15 AS
  (-- GetEdgesWithGTop
-  SELECT "ft_forumid" AS "friendPost#0", ROW("ft_forumid", "ft_tagid")::edge_type AS "_e214#0", "ft_tagid" AS "commonTag#0",
-    "tag"."t_name" AS "commonTag.name#0"
-    FROM "forum_tag"
-      JOIN "tag" ON ("forum_tag"."ft_tagid" = "tag"."t_tagid")),
+  SELECT ROW(3, edgeTable."ft_forumid")::vertex_type AS "friendPost#0", ROW(6, edgeTable."ft_forumid", edgeTable."ft_tagid")::edge_type AS "_e214#0", ROW(4, edgeTable."ft_tagid")::vertex_type AS "commonTag#0",
+    toTable."t_name" AS "commonTag.name#0"
+    FROM "forum_tag" edgeTable
+      JOIN "tag" toTable ON (edgeTable."ft_tagid" = toTable."t_tagid")),
 q16 AS
  (-- GetEdgesWithGTop
-  SELECT "mt_messageid" AS "friendPost#0", ROW("mt_messageid", "mt_tagid")::edge_type AS "_e214#0", "mt_tagid" AS "commonTag#0",
-    "tag"."t_name" AS "commonTag.name#0"
-    FROM "message_tag"
-      JOIN "tag" ON ("message_tag"."mt_tagid" = "tag"."t_tagid")),
+  SELECT ROW(6, edgeTable."mt_messageid")::vertex_type AS "friendPost#0", ROW(6, edgeTable."mt_messageid", edgeTable."mt_tagid")::edge_type AS "_e214#0", ROW(4, edgeTable."mt_tagid")::vertex_type AS "commonTag#0",
+    toTable."t_name" AS "commonTag.name#0"
+    FROM "message_tag" edgeTable
+      JOIN "tag" toTable ON (edgeTable."mt_tagid" = toTable."t_tagid")
+      JOIN "message" fromTable ON (fromTable."m_messageid" = edgeTable."mt_messageid")
+  WHERE (fromTable."m_c_replyof" IS NULL)),
 q17 AS
  (-- UnionAll
-  SELECT * FROM q15
+  SELECT "friendPost#0", "_e214#0", "commonTag#0", "commonTag.name#0" FROM q15
   UNION ALL
   SELECT "friendPost#0", "_e214#0", "commonTag#0", "commonTag.name#0" FROM q16),
--- q18 (AllDifferent): q17
+q18 AS
+ (-- GetEdgesWithGTop
+  SELECT ROW(6, edgeTable."mt_messageid")::vertex_type AS "friendPost#0", ROW(6, edgeTable."mt_messageid", edgeTable."mt_tagid")::edge_type AS "_e214#0", ROW(4, edgeTable."mt_tagid")::vertex_type AS "commonTag#0",
+    toTable."t_name" AS "commonTag.name#0"
+    FROM "message_tag" edgeTable
+      JOIN "tag" toTable ON (edgeTable."mt_tagid" = toTable."t_tagid")
+      JOIN "message" fromTable ON (fromTable."m_messageid" = edgeTable."mt_messageid")
+  WHERE (fromTable."m_c_replyof" IS NOT NULL)),
 q19 AS
+ (-- UnionAll
+  SELECT "friendPost#0", "_e214#0", "commonTag#0", "commonTag.name#0" FROM q17
+  UNION ALL
+  SELECT "friendPost#0", "_e214#0", "commonTag#0", "commonTag.name#0" FROM q18),
+-- q20 (AllDifferent): q19
+q21 AS
  (-- EquiJoinLike
   SELECT left_query."person#15", left_query."person.id#15", left_query."_e211#0", left_query."friend#5", left_query."friendPost#0", left_query."_e212#0", left_query."_e213#0", left_query."knownTag#0", left_query."knownTag.name#0", right_query."_e214#0", right_query."commonTag#0", right_query."commonTag.name#0" FROM
     q14 AS left_query
     INNER JOIN
-    q17 AS right_query
+    q19 AS right_query
   ON left_query."friendPost#0" = right_query."friendPost#0"),
-q20 AS
+q22 AS
  (-- Selection
-  SELECT * FROM q19 AS subquery
+  SELECT * FROM q21 AS subquery
   WHERE NOT(("commonTag#0" = "knownTag#0"))),
-q21 AS
+q23 AS
  (-- Projection
   SELECT "commonTag#0" AS "commonTag#0", "knownTag#0" AS "knownTag#0", "friend#5" AS "friend#5", "commonTag.name#0" AS "commonTag.name#0"
-    FROM q20 AS subquery),
-q22 AS
- (-- DuplicateElimination
-  SELECT DISTINCT * FROM q21 AS subquery),
-q23 AS
- (-- GetEdgesWithGTop
-  SELECT "mt_messageid" AS "commonPost#0", ROW("mt_messageid", "mt_tagid")::edge_type AS "_e215#0", "mt_tagid" AS "commonTag#0"
-    FROM "message_tag"),
+    FROM q22 AS subquery),
 q24 AS
- (-- GetEdgesWithGTop
-  SELECT "mt_messageid" AS "commonPost#0", ROW("mt_messageid", "mt_tagid")::edge_type AS "_e216#0", "mt_tagid" AS "knownTag#0"
-    FROM "message_tag"),
+ (-- DuplicateElimination
+  SELECT DISTINCT * FROM q23 AS subquery),
 q25 AS
+ (-- GetEdgesWithGTop
+  SELECT ROW(6, edgeTable."mt_messageid")::vertex_type AS "commonPost#0", ROW(6, edgeTable."mt_messageid", edgeTable."mt_tagid")::edge_type AS "_e215#0", ROW(4, edgeTable."mt_tagid")::vertex_type AS "commonTag#0"
+    FROM "message_tag" edgeTable
+      JOIN "message" fromTable ON (fromTable."m_messageid" = edgeTable."mt_messageid")
+  WHERE (fromTable."m_c_replyof" IS NULL)),
+q26 AS
+ (-- GetEdgesWithGTop
+  SELECT ROW(6, edgeTable."mt_messageid")::vertex_type AS "commonPost#0", ROW(6, edgeTable."mt_messageid", edgeTable."mt_tagid")::edge_type AS "_e216#0", ROW(4, edgeTable."mt_tagid")::vertex_type AS "knownTag#0"
+    FROM "message_tag" edgeTable
+      JOIN "message" fromTable ON (fromTable."m_messageid" = edgeTable."mt_messageid")
+  WHERE (fromTable."m_c_replyof" IS NULL)),
+q27 AS
  (-- EquiJoinLike
   SELECT left_query."commonPost#0", left_query."_e215#0", left_query."commonTag#0", right_query."_e216#0", right_query."knownTag#0" FROM
-    q23 AS left_query
+    q25 AS left_query
     INNER JOIN
-    q24 AS right_query
+    q26 AS right_query
   ON left_query."commonPost#0" = right_query."commonPost#0"),
-q26 AS
- (-- AllDifferent
-  SELECT * FROM q25 AS subquery
-    WHERE is_unique(ARRAY[]::edge_type[] || "_e215#0" || "_e216#0")),
-q27 AS
- (-- GetEdgesWithGTop
-  SELECT "m_messageid" AS "commonPost#0", ROW("m_messageid", "m_creatorid")::edge_type AS "_e217#0", "m_creatorid" AS "friend#5"
-    FROM "message"),
 q28 AS
+ (-- AllDifferent
+  SELECT * FROM q27 AS subquery
+    WHERE is_unique(ARRAY[]::edge_type[] || "_e215#0" || "_e216#0")),
+q29 AS
+ (-- GetEdgesWithGTop
+  SELECT ROW(6, fromTable."m_messageid")::vertex_type AS "commonPost#0", ROW(8, fromTable."m_messageid", fromTable."m_creatorid")::edge_type AS "_e217#0", ROW(0, fromTable."m_creatorid")::vertex_type AS "friend#5"
+    FROM "message" fromTable
+  WHERE (fromTable."m_c_replyof" IS NULL)),
+q30 AS
+ (-- GetEdgesWithGTop
+  SELECT ROW(6, fromTable."m_messageid")::vertex_type AS "commonPost#0", ROW(8, fromTable."m_messageid", fromTable."m_creatorid")::edge_type AS "_e217#0", ROW(0, fromTable."m_creatorid")::vertex_type AS "friend#5"
+    FROM "message" fromTable
+  WHERE (fromTable."m_c_replyof" IS NOT NULL)),
+q31 AS
+ (-- UnionAll
+  SELECT "commonPost#0", "_e217#0", "friend#5" FROM q29
+  UNION ALL
+  SELECT "commonPost#0", "_e217#0", "friend#5" FROM q30),
+q32 AS
  (-- EquiJoinLike
   SELECT left_query."commonPost#0", left_query."_e215#0", left_query."commonTag#0", left_query."_e216#0", left_query."knownTag#0", right_query."_e217#0", right_query."friend#5" FROM
-    q26 AS left_query
+    q28 AS left_query
     LEFT OUTER JOIN
-    q27 AS right_query
+    q31 AS right_query
   ON left_query."commonPost#0" = right_query."commonPost#0"),
-q29 AS
+q33 AS
  (-- EquiJoinLike
   SELECT left_query."commonTag#0", left_query."knownTag#0", left_query."friend#5", left_query."commonTag.name#0", right_query."_e216#0", right_query."_e217#0", right_query."commonPost#0", right_query."_e215#0" FROM
-    q22 AS left_query
+    q24 AS left_query
     INNER JOIN
-    q28 AS right_query
+    q32 AS right_query
   ON left_query."commonTag#0" = right_query."commonTag#0" AND
      left_query."knownTag#0" = right_query."knownTag#0" AND
      left_query."friend#5" = right_query."friend#5"),
-q30 AS
+q34 AS
  (-- Selection
-  SELECT * FROM q29 AS subquery
+  SELECT * FROM q33 AS subquery
   WHERE ((("friend#5" IS NOT NULL) AND ("_e217#0" IS NOT NULL)) AND ("commonPost#0" IS NOT NULL))),
-q31 AS
+q35 AS
  (-- Grouping
   SELECT "commonTag.name#0" AS "tagName#2", count("commonPost#0") AS "postCount#4"
-    FROM q30 AS subquery
+    FROM q34 AS subquery
   GROUP BY "commonTag.name#0"),
-q32 AS
+q36 AS
  (-- SortAndTop
-  SELECT * FROM q31 AS subquery
+  SELECT * FROM q35 AS subquery
     ORDER BY "postCount#4" DESC NULLS LAST, "tagName#2" ASC NULLS FIRST
     LIMIT 10)
 SELECT "tagName#2" AS "tagName", "postCount#4" AS "postCount"
-  FROM q32 AS subquery
+  FROM q36 AS subquery
