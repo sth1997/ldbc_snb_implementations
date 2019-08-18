@@ -1,0 +1,80 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <repositories>
+        <repository>
+            <id>alimirror</id>
+            <name>alibaba mirror</name>
+            <url>http://mvnrepo.alibaba-inc.com/mvn/repository</url>
+        </repository>
+        <repository>
+            <id>maven2</id>
+            <url>http://search.maven.org</url>
+        </repository>
+    </repositories>
+
+    <parent>
+        <groupId>com.ldbc.snb</groupId>
+        <artifactId>implementations</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>tinkerpop3</artifactId>
+    <name>Tinkerpop3 Interactive class</name>
+    <description>Tinkerpop3 implementation for SNB Interactive driver</description>
+    <dependencies>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.5</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-lang</groupId>
+            <artifactId>commons-lang</artifactId>
+            <version>2.6</version>
+        </dependency>
+        <dependency>
+            <groupId>com.alibaba.maxgraph</groupId>
+            <artifactId>maxgraph-sdk</artifactId>
+            <version>1.5.15-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.ldbc.snb</groupId>
+            <artifactId>common</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.tinkerpop</groupId>
+            <artifactId>gremlin-core</artifactId>
+            <version>3.4.3</version>
+        </dependency>
+
+        <!-- when using Gremlin Server or Remote Gremlin Provider a driver is required -->
+        <dependency>
+            <groupId>org.apache.tinkerpop</groupId>
+            <artifactId>gremlin-driver</artifactId>
+            <version>3.4.3</version>
+        </dependency>
+    </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>2.4.1</version>
+                <configuration>
+                    <!-- put your configurations here -->
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

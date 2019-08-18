@@ -1,0 +1,1 @@
+g.V().hasLabel('Person').has('id',$personId).out('knows').union(identity(),out('knows').union(identity(),out('knows'))).dedup().has('firstName',eq($firstName)).order().by(__.path().count(local),decr).by('lastName').by('id').valueMap().limit(20)
