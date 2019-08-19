@@ -1,0 +1,4 @@
+g.V().hasLabel('Person').has('id',21990232559429).both('knows').in('hasCreator').hasLabel('Post').has('creationDate',inside(20120501000000000,20120607000000000)).out('hasTag').filter(__.in('hasTag').has('createDate', lt(20120501000000000)).count().is(0)).groupCount().unfold().order().by(select(values),decr).by(select(keys).values('name')).limit(10)
+
+
+fan hui zhi shi map, key shi tag(vertex), value shi postcount.

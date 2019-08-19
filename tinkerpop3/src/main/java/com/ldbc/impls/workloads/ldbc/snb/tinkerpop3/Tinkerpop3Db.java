@@ -89,9 +89,10 @@ public abstract class Tinkerpop3Db extends BaseDb<Tinkerpop3QueryStore>{
         @Override
         public LdbcQuery1Result convertSingleResult(Result result) throws ParseException {
             List<String> emails;
-            Vertex vertex = result.getVertex();
-            String id = (String) vertex.property("id").value();
-            System.out.println("id = " + id);
+            Map map = (Map)result.getObject();
+            //String id = (String) vertex.property("id").value();
+            //System.out.println("id = " + id);
+            System.out.println(map);
             return null;
         }
     }

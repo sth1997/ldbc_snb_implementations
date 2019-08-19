@@ -1,0 +1,8 @@
+g.V().hasLabel('Person').has('id', 13194139542834)
+  .both('knows')
+  .union(identity(), both('knows'))
+  .dedup().has('id', neq(13194139542834)).as('friends')
+  .in('hasCreator').has('creationDate',lt(20111217000000000)).as('post')
+  .order().by('creationDate', decr).by('id', incr).limit(20).select('friends','post')
+
+key shi string, value shi vertex

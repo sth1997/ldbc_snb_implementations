@@ -1,0 +1,1 @@
+g.V().hasLabel('Person').has('id',17592186052613).both('knows').as('p').in('hasCreator').has('creationDate',lte(20121128000000000)).order().by('creationDate',decr).by('id',incr).limit(20).as('m').select('p', 'm')

@@ -38,7 +38,13 @@
             <groupId>com.alibaba.maxgraph</groupId>
             <artifactId>maxgraph-sdk</artifactId>
             <version>1.5.15-SNAPSHOT</version>
-        </dependency>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.fasterxml.jackson.core</groupId>
+                    <artifactId>jackson-databind</artifactId>
+                </exclusion>
+            </exclusions> 
+       </dependency>
         <dependency>
             <groupId>com.ldbc.snb</groupId>
             <artifactId>common</artifactId>

@@ -1,0 +1,7 @@
+g.V().hasLabel('Person').has('id', 17592186055119)
+  .repeat(both('knows').simplePath())
+  .until(has('id', 8796093025131).or().loops().is(gt(4)))
+  .has('id', 8796093025131)
+  .path()
+  .order().by(count(local), incr)
+  .limit(1)

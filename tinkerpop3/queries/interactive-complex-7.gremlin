@@ -1,0 +1,7 @@
+g.V().hasLabel('Person').has('id',17592186053137).in('hasCreator').as('message').inE('likes').as('like').values('creationDate').as('likedate').select('like').outV().as('liker').order().by(select('likedate'), decr).by('id', incr).limit(20).select('message', 'likedate', 'liker')
+
+key shi ming zi
+
+g.V().hasLabel('Person').has('id',17592186053137).both('knows').has('Person', 'id', 1455781824828038930)
+
+ru guo die dai qi wei kong jiu bu shi peng you, isNew = true
