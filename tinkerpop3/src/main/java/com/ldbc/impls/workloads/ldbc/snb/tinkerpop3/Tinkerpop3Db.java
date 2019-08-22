@@ -87,13 +87,13 @@ public abstract class Tinkerpop3Db extends BaseDb<Tinkerpop3QueryStore> {
 
         @Override
         public String getSubQueryString(Tinkerpop3DbConnectionState state, LdbcQuery1 operation, Result result) {
-            return String.format("g.V('%s').as('p').out('isLocatedIn').as('city').select('p').outE('studyAt').as('study').inV().as('u').out('isLocatedIn').as('ucity').select('p').outE('workAt').as('we').inV().as('company').out('isLocatedIn').as('ccity').select('city', 'study', 'u', 'ucity', 'we', 'company', 'ccity')", ((Map) result.getObject()).get('a').toString());
+            return String.format("g.V('%s').as('p').out('isLocatedIn').as('city').select('p').outE('studyAt').as('study').inV().as('u').out('isLocatedIn').as('ucity').select('p').outE('workAt').as('we').inV().as('company').out('isLocatedIn').as('ccity').select('city', 'study', 'u', 'ucity', 'we', 'company', 'ccity')", ((Map) result.getObject()).get("a").toString());
         }
 
         @Override
         public LdbcQuery1Result convertSingleResult(Result result, ResultSet subResultSet) throws ParseException {
             Map otherInfo = (Map) subResultSet.one().getObject();
-            Vertex person = (Vertex) ((Map) result.getObject()).get('a');
+            Vertex person = (Vertex) ((Map) result.getObject()).get("a");
             //TODO : eamil
             List<String> emails;
             emails = new ArrayList<>();
@@ -111,7 +111,7 @@ public abstract class Tinkerpop3Db extends BaseDb<Tinkerpop3QueryStore> {
             //long friendId = Long.parseLong((String)person.property("id").value());
             long friendId = (Long) person.property("id").value();
             String friendLastName = (String) person.property("lastName").value();
-            int distanceFromPerson = Integer.parseInt((String) ((Map) result.getObject()).get('b'));
+            int distanceFromPerson = Integer.parseInt((String) ((Map) result.getObject()).get("b")) - 1;
             long friendBirthday = Tinkerpop3Converter.convertLongDateToEpoch((Long) person.property("birthday").value());
             long friendCreationDate = Tinkerpop3Converter.convertLongTimestampToEpoch((Long) person.property("creationDate").value());
             String friendGender = (String) person.property("gender").value();
@@ -143,8 +143,8 @@ public abstract class Tinkerpop3Db extends BaseDb<Tinkerpop3QueryStore> {
 
         @Override
         public LdbcQuery2Result convertSingleResult(Result result) throws ParseException {
-            Vertex person = (Vertex) ((Map) result.getObject()).get('p');
-            Vertex message = (Vertex) ((Map) result.getObject()).get('m');
+            Vertex person = (Vertex) ((Map) result.getObject()).get("p");
+            Vertex message = (Vertex) ((Map) result.getObject()).get("m");
             long personId = (Long) person.property("id").value();
             String personFirstName = (String) person.property("firstName").value();
             String personLastName = (String) person.property("lastName").value();
