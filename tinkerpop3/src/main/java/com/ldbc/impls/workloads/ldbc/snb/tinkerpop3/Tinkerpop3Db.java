@@ -62,6 +62,7 @@ import com.ldbc.impls.workloads.ldbc.snb.tinkerpop3.operationhandlers.Tinkerpop3
 import com.ldbc.impls.workloads.ldbc.snb.db.BaseDb;
 import  org.apache.tinkerpop.gremlin.driver.Result;
 import org.apache.tinkerpop.gremlin.driver.ResultSet;
+import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 
 import java.sql.SQLException;
@@ -87,37 +88,82 @@ public abstract class Tinkerpop3Db extends BaseDb<Tinkerpop3QueryStore> {
 
         @Override
         public String getSubQueryString(Tinkerpop3DbConnectionState state, LdbcQuery1 operation, Result result) {
-            return String.format("g.V('%s').as('p').out('isLocatedIn').as('city').select('p').outE('studyAt').as('study').inV().as('u').out('isLocatedIn').as('ucity').select('p').outE('workAt').as('we').inV().as('company').out('isLocatedIn').as('ccity').select('city', 'study', 'u', 'ucity', 'we', 'company', 'ccity')", ((Map) result.getObject()).get("a").toString());
+            return String.format("g.V('%s').union(out('isLocatedIn').values('name'),outE('studyAt').as('study').inV().as('u').out('isLocatedIn').as('city').select('study','u','city'),outE('workAt').as('we').inV().as('company').out('isLocatedIn').as('country').select('we','company','country'))", ((Map) result.getObject()).get("a").toString());
         }
 
         @Override
         public LdbcQuery1Result convertSingleResult(Result result, ResultSet subResultSet) throws ParseException {
-            Map otherInfo = (Map) subResultSet.one().getObject();
+
             Vertex person = (Vertex) ((Map) result.getObject()).get("a");
-            //TODO : eamil
             List<String> emails;
-            emails = new ArrayList<>();
+            String[] emailStrs = ((String)person.property("email").value()).split(";");
+            emails = Arrays.asList(emailStrs);
             //TODO : language
             List<String> languages;
-            languages = new ArrayList<>();
-            //TODO : universities
+            String[] languageStrs = ((String)person.property("language").value()).split(";");
+            languages = Arrays.asList(languageStrs);
             List<List<Object>> universities;
             universities = new ArrayList<>();
-            //TODO : companies;
             List<List<Object>> companies;
             companies = new ArrayList<>();
+
+            String friendCityName = "";
+            Iterator<Result> iter = subResultSet.iterator();
+            while (iter.hasNext()) {
+                Object obj = iter.next().getObject();
+                if (obj instanceof String)
+                {
+                    friendCityName = (String) obj;
+                }
+                else
+                {
+                    Map otherInfo = (Map) obj;
+                    if (otherInfo.containsKey("study")) //University
+                    {
+                        String universityName = (String)((Vertex)otherInfo.get("u")).property("name").value();
+                        Integer classYear = (Integer)((Edge)otherInfo.get("study")).property("classYear").value();
+                        String universityCity = (String)((Vertex)otherInfo.get("city")).property("name").value();
+                        universities.add(Arrays.asList(universityName, classYear, universityCity));
+                    }
+                    else //Company
+                    {
+                        String companyName = (String)((Vertex)otherInfo.get("company")).property("name").value();
+                        Integer workFrom = (Integer)((Edge)otherInfo.get("we")).property("workFrom").value();
+                        String companyCountry = (String)((Vertex)otherInfo.get("country")).property("name").value();
+                        companies.add(Arrays.asList(companyName, workFrom, companyCountry));
+                    }
+                }
+                /*Map otherInfo = (Map) iter.next().getObject();
+                friendCityName = (String) ((Vertex) otherInfo.get("city")).property("name").value();
+                long universityId = (long)((Vertex)otherInfo.get("u")).property("id").value();
+                if (universityId != lastUniversityId) {
+                    String universityName = (String)((Vertex)otherInfo.get("u")).property("name").value();
+                    Integer classYear = (Integer)((Edge)otherInfo.get("study")).property("classYear").value();
+                    String universityCity = (String)((Vertex)otherInfo.get("ucity")).property("name").value();
+                    lastUniversityId = universityId;
+                    universities.add(Arrays.asList(universityName, classYear, universityCity));
+                }
+                long companyId = (long)((Vertex)otherInfo.get("company")).property("id").value();
+                if (companyId != lastCompanyId)
+                {
+                    String companyName = (String)((Vertex)otherInfo.get("company")).property("name").value();
+                    Integer workFrom = (Integer)((Edge)otherInfo.get("we")).property("workFrom").value();
+                    String companyCountry = (String)((Vertex)otherInfo.get("ccity")).property("name").value();
+                    lastCompanyId = companyId;
+                    companies.add(Arrays.asList(companyName, workFrom, companyCountry));
+                }*/
+            }
 
             //TODO : check type
             //long friendId = Long.parseLong((String)person.property("id").value());
             long friendId = (Long) person.property("id").value();
             String friendLastName = (String) person.property("lastName").value();
-            int distanceFromPerson = Integer.parseInt((String) ((Map) result.getObject()).get("b")) - 1;
+            int distanceFromPerson = ((Long)((Map) result.getObject()).get("b")).intValue() - 1;
             long friendBirthday = Tinkerpop3Converter.convertLongDateToEpoch((Long) person.property("birthday").value());
             long friendCreationDate = Tinkerpop3Converter.convertLongTimestampToEpoch((Long) person.property("creationDate").value());
             String friendGender = (String) person.property("gender").value();
             String friendBrowserUsed = (String) person.property("browserUsed").value();
             String friendLocationIp = (String) person.property("locationIP").value();
-            String friendCityName = (String) ((Vertex) otherInfo.get("city")).property("name").value();
             return new LdbcQuery1Result(
                     friendId,
                     friendLastName,
@@ -255,7 +301,7 @@ public abstract class Tinkerpop3Db extends BaseDb<Tinkerpop3QueryStore> {
             String personId = state.getQueryStore().getConverter().convertId(operation.personId());
             Vertex friend = (Vertex) ((Map) result.getObject()).get("liker");
             String friendId = (String) friend.property("id").value();
-            return String.format("g.V().hasLabel('Person').has('id',%s).both('knows').has('Person', 'id', %s)", personId, friendId);
+            return String.format("g.V().hasLabel('Person').has('id',%s).out('knows').has('Person', 'id', %s)", personId, friendId);
         }
 
         @Override
@@ -376,7 +422,7 @@ public abstract class Tinkerpop3Db extends BaseDb<Tinkerpop3QueryStore> {
         public String getSubQueryString(Tinkerpop3DbConnectionState state, LdbcQuery12 operation, Result result) {
             Vertex person = (Vertex) ((Map.Entry)result.getObject()).getKey();
             String tagClassName = state.getQueryStore().getConverter().convertString(operation.tagClassName());
-            return String.format("g.V('%s').in('hasCreator').hasLabel('Comment').as('comment') .out('replyOf').hasLabel('Post').out('hasTag').as('tag').out('hasType').has('name',within('%s')).select('tag').values('name').dedup()", person.toString(), tagClassName);
+            return String.format("g.V('%s').in('hasCreator').hasLabel('Comment').as('comment').out('replyOf').hasLabel('Post').out('hasTag').as('tag').out('hasType').has('name',within('%s')).select('tag').values('name').dedup()", person.toString(), tagClassName);
         }
 
         @Override

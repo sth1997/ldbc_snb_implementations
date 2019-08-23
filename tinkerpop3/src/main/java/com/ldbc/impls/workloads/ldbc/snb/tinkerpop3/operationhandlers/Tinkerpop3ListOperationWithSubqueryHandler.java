@@ -29,16 +29,12 @@ public abstract  class Tinkerpop3ListOperationWithSubqueryHandler <TOperation ex
 
         final String queryString = getQueryString(state, operation);
         state.logQuery(operation.getClass().getSimpleName(), queryString);
-        System.out.println("queryString = " + queryString);
         final ResultSet resultSet = client.submit(queryString);
-        System.out.println("after submit.");
         Iterator<Result> iter = resultSet.iterator();
-        System.out.println("hasNext = " + iter.hasNext());
         while (iter.hasNext()) {
             final Result result = iter.next();
             resultCount++;
             final String subQueryString = getSubQueryString(state, operation, result);
-            System.out.println("subQuery = " + subQueryString);
             final ResultSet resultSet2 = client.submit(subQueryString);
             TOperationResult tuple;
             try {

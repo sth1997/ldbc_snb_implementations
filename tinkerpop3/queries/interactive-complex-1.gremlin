@@ -1,4 +1,1 @@
-g.V().hasLabel('Person').has('id',$personId).both('knows').union(identity(),both('knows').union(identity(),both('knows'))).dedup().has('firstName',eq($firstName)).as('a').path().count(local).as('b').select('a').order().by(select('b'),incr).by('lastName').by('id').limit(20).select('a', 'b')
-
-
-g.V('1.-4257493404231165349').as('p').out('isLocatedIn').as('city').select('p').outE('studyAt').as('study').inV().as('u').out('isLocatedIn').as('ucity').select('p').outE('workAt').as('we').inV().as('company').out('isLocatedIn').as('ccity').select('city', 'study', 'u', 'ucity', 'we', 'company', 'ccity')
+g.V().hasLabel('Person').has('id',$personId).out('knows').union(identity(),out('knows').union(identity(),out('knows'))).dedup().has('firstName',eq($firstName)).as('a').path().count(local).as('b').select('a').order().by(select('b'),incr).by('lastName').by('id').limit(20).select('a', 'b')
