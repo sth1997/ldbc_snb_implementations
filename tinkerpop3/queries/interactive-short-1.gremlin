@@ -1,0 +1,1 @@
+g.V().has('Person', 'id', $personId).as('p').out('isLocatedIn').as('c').select('p', 'c')

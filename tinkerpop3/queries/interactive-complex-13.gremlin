@@ -1,7 +1,1 @@
-g.V().hasLabel('Person').has('id', 17592186055119)
-  .repeat(both('knows').simplePath())
-  .until(has('id', 8796093025131).or().loops().is(gt(4)))
-  .has('id', 8796093025131)
-  .path()
-  .order().by(count(local), incr)
-  .limit(1)
+g.V().has('Person', 'id', $person1Id).repeat(out('knows').simplePath()).until(has('Person', 'id', $person2Id).or().loops().is(gt(4))).has('Person', 'id', $person2Id).path().count(local).order().limit(1)

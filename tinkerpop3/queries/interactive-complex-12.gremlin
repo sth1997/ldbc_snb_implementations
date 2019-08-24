@@ -1,18 +1,1 @@
-g.V().hasLabel('Person').has('id',17592186052613)
-  .both('knows').as('friend').in('hasCreator').hasLabel('Comment').as('comment')
-  .filter(out('replyOf').hasLabel('Post').out('hasTag').as('tag').out('hasType')
-  .has('name',within('BasketballPlayer'))).as('comment')
-  .select('friend')
-  .groupCount().unfold()
-  .order()
-  .by(select(values), decr)
-  .by('id', incr)
-  .limit(20)
-
-key shi person(vertex), value shi count(long)
-
-g.V('1.-8815105150605564154').in('hasCreator').hasLabel('Comment').as('comment')
-  .out('replyOf').hasLabel('Post').out('hasTag').as('tag').out('hasType')
-  .has('name',within('BasketballPlayer')).select('tag').values('name').dedup()
-
-fan hui iter(string)
+g.V().hasLabel('Person').has('id',$personId).out('knows').as('friend').in('hasCreator').hasLabel('Comment').as('comment').filter(out('replyOf').hasLabel('Post').out('hasTag').as('tag').out('hasType').has('name',within('$tagClassName'))).as('comment').select('friend').groupCount().unfold().order().by(select(values), decr).by('id', incr).limit(20)

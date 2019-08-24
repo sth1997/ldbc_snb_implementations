@@ -1,0 +1,1 @@
+g.V().has('Person', 'id', $personId).in('hasCreator').order().by('creationDate', decr).by('id', decr).limit(10)

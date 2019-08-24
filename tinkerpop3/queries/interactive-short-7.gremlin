@@ -1,0 +1,1 @@
+g.V().hasLabel('Post', 'Comment').has('id', $messageId).as('m').out('hasCreator').as('p1').select('m').in('replyOf').as('r').out('hasCreator').as('p2').select('p1', 'r', 'p2')

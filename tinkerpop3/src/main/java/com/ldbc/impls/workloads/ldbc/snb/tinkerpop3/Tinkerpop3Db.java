@@ -55,10 +55,7 @@ import com.ldbc.driver.workloads.ldbc.snb.bi.LdbcSnbBiQuery9RelatedForums;
 import com.ldbc.driver.workloads.ldbc.snb.bi.LdbcSnbBiQuery9RelatedForumsResult;
 import com.ldbc.driver.workloads.ldbc.snb.interactive.*;
 import com.ldbc.impls.workloads.ldbc.snb.tinkerpop3.converter.Tinkerpop3Converter;
-import com.ldbc.impls.workloads.ldbc.snb.tinkerpop3.operationhandlers.Tinkerpop3ListOperationHandler;
-import com.ldbc.impls.workloads.ldbc.snb.tinkerpop3.operationhandlers.Tinkerpop3ListOperationWithSubqueryHandler;
-import com.ldbc.impls.workloads.ldbc.snb.tinkerpop3.operationhandlers.Tinkerpop3SingletonOperationHandler;
-import com.ldbc.impls.workloads.ldbc.snb.tinkerpop3.operationhandlers.Tinkerpop3UpdateOperationHandler;
+import com.ldbc.impls.workloads.ldbc.snb.tinkerpop3.operationhandlers.*;
 import com.ldbc.impls.workloads.ldbc.snb.db.BaseDb;
 import  org.apache.tinkerpop.gremlin.driver.Result;
 import org.apache.tinkerpop.gremlin.driver.ResultSet;
@@ -96,11 +93,10 @@ public abstract class Tinkerpop3Db extends BaseDb<Tinkerpop3QueryStore> {
 
             Vertex person = (Vertex) ((Map) result.getObject()).get("a");
             List<String> emails;
-            String[] emailStrs = ((String)person.property("email").value()).split(";");
+            String[] emailStrs = ((String) person.property("email").value()).split(";");
             emails = Arrays.asList(emailStrs);
-            //TODO : language
             List<String> languages;
-            String[] languageStrs = ((String)person.property("language").value()).split(";");
+            String[] languageStrs = ((String) person.property("language").value()).split(";");
             languages = Arrays.asList(languageStrs);
             List<List<Object>> universities;
             universities = new ArrayList<>();
@@ -111,25 +107,21 @@ public abstract class Tinkerpop3Db extends BaseDb<Tinkerpop3QueryStore> {
             Iterator<Result> iter = subResultSet.iterator();
             while (iter.hasNext()) {
                 Object obj = iter.next().getObject();
-                if (obj instanceof String)
-                {
+                if (obj instanceof String) {
                     friendCityName = (String) obj;
-                }
-                else
-                {
+                } else {
                     Map otherInfo = (Map) obj;
                     if (otherInfo.containsKey("study")) //University
                     {
-                        String universityName = (String)((Vertex)otherInfo.get("u")).property("name").value();
-                        Integer classYear = (Integer)((Edge)otherInfo.get("study")).property("classYear").value();
-                        String universityCity = (String)((Vertex)otherInfo.get("city")).property("name").value();
+                        String universityName = (String) ((Vertex) otherInfo.get("u")).property("name").value();
+                        Integer classYear = (Integer) ((Edge) otherInfo.get("study")).property("classYear").value();
+                        String universityCity = (String) ((Vertex) otherInfo.get("city")).property("name").value();
                         universities.add(Arrays.asList(universityName, classYear, universityCity));
-                    }
-                    else //Company
+                    } else //Company
                     {
-                        String companyName = (String)((Vertex)otherInfo.get("company")).property("name").value();
-                        Integer workFrom = (Integer)((Edge)otherInfo.get("we")).property("workFrom").value();
-                        String companyCountry = (String)((Vertex)otherInfo.get("country")).property("name").value();
+                        String companyName = (String) ((Vertex) otherInfo.get("company")).property("name").value();
+                        Integer workFrom = (Integer) ((Edge) otherInfo.get("we")).property("workFrom").value();
+                        String companyCountry = (String) ((Vertex) otherInfo.get("country")).property("name").value();
                         companies.add(Arrays.asList(companyName, workFrom, companyCountry));
                     }
                 }
@@ -154,13 +146,12 @@ public abstract class Tinkerpop3Db extends BaseDb<Tinkerpop3QueryStore> {
                 }*/
             }
 
-            //TODO : check type
             //long friendId = Long.parseLong((String)person.property("id").value());
-            long friendId = (Long) person.property("id").value();
+            long friendId = (long) person.property("id").value();
             String friendLastName = (String) person.property("lastName").value();
-            int distanceFromPerson = ((Long)((Map) result.getObject()).get("b")).intValue() - 1;
-            long friendBirthday = Tinkerpop3Converter.convertLongDateToEpoch((Long) person.property("birthday").value());
-            long friendCreationDate = Tinkerpop3Converter.convertLongTimestampToEpoch((Long) person.property("creationDate").value());
+            int distanceFromPerson = ((Long) ((Map) result.getObject()).get("b")).intValue() - 1;
+            long friendBirthday = Tinkerpop3Converter.convertLongDateToEpoch((long) person.property("birthday").value());
+            long friendCreationDate = Tinkerpop3Converter.convertLongTimestampToEpoch((long) person.property("creationDate").value());
             String friendGender = (String) person.property("gender").value();
             String friendBrowserUsed = (String) person.property("browserUsed").value();
             String friendLocationIp = (String) person.property("locationIP").value();
@@ -191,13 +182,13 @@ public abstract class Tinkerpop3Db extends BaseDb<Tinkerpop3QueryStore> {
         public LdbcQuery2Result convertSingleResult(Result result) throws ParseException {
             Vertex person = (Vertex) ((Map) result.getObject()).get("p");
             Vertex message = (Vertex) ((Map) result.getObject()).get("m");
-            long personId = (Long) person.property("id").value();
+            long personId = (long) person.property("id").value();
             String personFirstName = (String) person.property("firstName").value();
             String personLastName = (String) person.property("lastName").value();
-            long messageId = (Long) message.property("id").value();
+            long messageId = (long) message.property("id").value();
             //TODO : messageContent
             String messageContent = "";
-            long messageCreationDate = Tinkerpop3Converter.convertLongTimestampToEpoch((Long) message.property("creationDate").value());
+            long messageCreationDate = Tinkerpop3Converter.convertLongTimestampToEpoch((long) message.property("creationDate").value());
             return new LdbcQuery2Result(
                     personId,
                     personFirstName,
@@ -217,14 +208,14 @@ public abstract class Tinkerpop3Db extends BaseDb<Tinkerpop3QueryStore> {
             Date endDate = state.getQueryStore().addDays(operation.startDate(), operation.durationDays());
             String endTime = state.getQueryStore().getConverter().convertDateTime(endDate);
             String countryY = state.getQueryStore().getConverter().convertString(operation.countryYName());
-            return String.format("g.V('%s').in('hasCreator').has('creationDate',inside(%s,%s)).filter(__.out('isLocatedIn').has('name',eq('%s'))).count()", entry.getKey().toString(), startTime, endTime, countryY);
+            return String.format("g.V('%s').in('hasCreator').has('creationDate',inside(%d,%d)).filter(__.out('isLocatedIn').has('name',eq('%s'))).count()", entry.getKey().toString(), startTime, endTime, countryY);
         }
 
         @Override
         public LdbcQuery3Result convertSingleResult(Result result, ResultSet subResultSet) throws ParseException {
             Map.Entry<Vertex, Long> entry = (Map.Entry) result.getObject();
             Vertex person = entry.getKey();
-            long personId = (Long) person.property("id").value();
+            long personId = (long) person.property("id").value();
             String personFirstName = (String) person.property("firstName").value();
             String personLastName = (String) person.property("lastName").value();
             int xCount = entry.getValue().intValue();
@@ -250,7 +241,7 @@ public abstract class Tinkerpop3Db extends BaseDb<Tinkerpop3QueryStore> {
         @Override
         public LdbcQuery4Result convertSingleResult(Result result) throws ParseException {
             Map.Entry<Vertex, Long> entry = (Map.Entry) result.getObject();
-            String tagName = (String)entry.getKey().property("name").value();
+            String tagName = (String) entry.getKey().property("name").value();
             int postCount = entry.getValue().intValue();
             return new LdbcQuery4Result(tagName, postCount);
         }
@@ -267,7 +258,7 @@ public abstract class Tinkerpop3Db extends BaseDb<Tinkerpop3QueryStore> {
         @Override
         public LdbcQuery5Result convertSingleResult(Result result) throws ParseException {
             Map.Entry<Vertex, Long> entry = (Map.Entry) result.getObject();
-            String forumTitle = (String)entry.getKey().property("title").value();
+            String forumTitle = (String) entry.getKey().property("title").value();
             int postCount = entry.getValue().intValue();
             return new LdbcQuery5Result(forumTitle, postCount);
         }
@@ -283,7 +274,7 @@ public abstract class Tinkerpop3Db extends BaseDb<Tinkerpop3QueryStore> {
         @Override
         public LdbcQuery6Result convertSingleResult(Result result) throws ParseException {
             Map.Entry<Vertex, Long> entry = (Map.Entry) result.getObject();
-            String tagName = (String)entry.getKey().property("name").value();
+            String tagName = (String) entry.getKey().property("name").value();
             int postCount = entry.getValue().intValue();
             return new LdbcQuery6Result(tagName, postCount);
         }
@@ -301,21 +292,21 @@ public abstract class Tinkerpop3Db extends BaseDb<Tinkerpop3QueryStore> {
             String personId = state.getQueryStore().getConverter().convertId(operation.personId());
             Vertex friend = (Vertex) ((Map) result.getObject()).get("liker");
             String friendId = (String) friend.property("id").value();
-            return String.format("g.V().hasLabel('Person').has('id',%s).out('knows').has('Person', 'id', %s)", personId, friendId);
+            return String.format("g.V().hasLabel('Person').has('id',%d).out('knows').has('Person', 'id', %d)", personId, friendId);
         }
 
         @Override
         public LdbcQuery7Result convertSingleResult(Result result, ResultSet subResultSet) throws ParseException {
-            Vertex person = (Vertex) ((Map)result.getObject()).get("liker");
-            Vertex message = (Vertex) ((Map)result.getObject()).get("message");
-            long personId = (Long) person.property("id").value();
+            Vertex person = (Vertex) ((Map) result.getObject()).get("liker");
+            Vertex message = (Vertex) ((Map) result.getObject()).get("message");
+            long personId = (long) person.property("id").value();
             String personFirstName = (String) person.property("firstName").value();
             String personLastName = (String) person.property("lastName").value();
-            long likeCreationDate = Tinkerpop3Converter.convertLongTimestampToEpoch((Long) ((Map)result.getObject()).get("likedate"));
-            long messageId = (Long) message.property("id").value();
+            long likeCreationDate = Tinkerpop3Converter.convertLongTimestampToEpoch((long) ((Map) result.getObject()).get("likedate"));
+            long messageId = (long) message.property("id").value();
             //TODO : messageContent
             String messageContent = "";
-            int minutesLatency = Tinkerpop3Converter.convertStartAndEndDateToLatency((Long) message.property("creationDate").value(), likeCreationDate);
+            int minutesLatency = Tinkerpop3Converter.convertStartAndEndDateToLatency((long) message.property("creationDate").value(), likeCreationDate);
             boolean isNew = (subResultSet.one() == null);
             return new LdbcQuery7Result(
                     personId,
@@ -338,12 +329,12 @@ public abstract class Tinkerpop3Db extends BaseDb<Tinkerpop3QueryStore> {
 
         @Override
         public LdbcQuery8Result convertSingleResult(Result result) throws ParseException {
-            Vertex person = (Vertex) ((Map)result.getObject()).get("commenter");
-            Vertex comment = (Vertex) ((Map)result.getObject()).get("comment");
+            Vertex person = (Vertex) ((Map) result.getObject()).get("commenter");
+            Vertex comment = (Vertex) ((Map) result.getObject()).get("comment");
             long personId = (long) person.property("id").value();
             String personFirstName = (String) person.property("firstName").value();
             String personLastName = (String) person.property("lastName").value();
-            long commentCreationDate = Tinkerpop3Converter.convertLongTimestampToEpoch((Long) comment.property("creationDate").value());
+            long commentCreationDate = Tinkerpop3Converter.convertLongTimestampToEpoch((long) comment.property("creationDate").value());
             long commentId = (long) comment.property("id").value();
             String commentContent = (String) comment.property("content").value();
             return new LdbcQuery8Result(
@@ -365,12 +356,12 @@ public abstract class Tinkerpop3Db extends BaseDb<Tinkerpop3QueryStore> {
 
         @Override
         public LdbcQuery9Result convertSingleResult(Result result) throws ParseException {
-            Vertex person = (Vertex) ((Map)result.getObject()).get("liker");
-            Vertex message = (Vertex) ((Map)result.getObject()).get("message");
-            long personId = (Long) person.property("id").value();
+            Vertex person = (Vertex) ((Map) result.getObject()).get("liker");
+            Vertex message = (Vertex) ((Map) result.getObject()).get("message");
+            long personId = (long) person.property("id").value();
             String personFirstName = (String) person.property("firstName").value();
             String personLastName = (String) person.property("lastName").value();
-            long messageId = (Long) message.property("id").value();
+            long messageId = (long) message.property("id").value();
             String messageContent = (String) message.property("content").value();
             long messageCreationDate = Tinkerpop3Converter.convertLongTimestampToEpoch((long) message.property("creationDate").value());
             return new LdbcQuery9Result(
@@ -396,7 +387,7 @@ public abstract class Tinkerpop3Db extends BaseDb<Tinkerpop3QueryStore> {
         public LdbcQuery11Result convertSingleResult(Result result) throws ParseException {
             Map map = (Map) result.getObject();
             Vertex person = (Vertex) map.get("friends");
-            long personId = (Long) person.property("id").value();
+            long personId = (long) person.property("id").value();
             String personFirstName = (String) person.property("firstName").value();
             String personLastName = (String) person.property("lastName").value();
             String organizationName = (String) map.get("orgname");
@@ -420,20 +411,23 @@ public abstract class Tinkerpop3Db extends BaseDb<Tinkerpop3QueryStore> {
 
         @Override
         public String getSubQueryString(Tinkerpop3DbConnectionState state, LdbcQuery12 operation, Result result) {
-            Vertex person = (Vertex) ((Map.Entry)result.getObject()).getKey();
+            Vertex person = (Vertex) ((Map.Entry) result.getObject()).getKey();
             String tagClassName = state.getQueryStore().getConverter().convertString(operation.tagClassName());
             return String.format("g.V('%s').in('hasCreator').hasLabel('Comment').as('comment').out('replyOf').hasLabel('Post').out('hasTag').as('tag').out('hasType').has('name',within('%s')).select('tag').values('name').dedup()", person.toString(), tagClassName);
         }
 
         @Override
         public LdbcQuery12Result convertSingleResult(Result result, ResultSet subResultSet) throws ParseException {
-            Vertex person = (Vertex) ((Map.Entry)result.getObject()).getKey();
-            long personId = (Long) person.property("id").value();
+            Vertex person = (Vertex) ((Map.Entry) result.getObject()).getKey();
+            long personId = (long) person.property("id").value();
             String personFirstName = (String) person.property("firstName").value();
             String personLastName = (String) person.property("lastName").value();
-            //TODO : tagNames
             List<String> tagNames = new ArrayList<>();
-            int replyCount = ((Long) ((Map.Entry)result.getObject()).getValue()).intValue();
+            Iterator<Result> iter = subResultSet.iterator();
+            while (iter.hasNext()) {
+                tagNames.add((String) iter.next().getObject());
+            }
+            int replyCount = ((Long) ((Map.Entry) result.getObject()).getValue()).intValue();
             return new LdbcQuery12Result(
                     personId,
                     personFirstName,
@@ -448,7 +442,228 @@ public abstract class Tinkerpop3Db extends BaseDb<Tinkerpop3QueryStore> {
         }
     }
 
-    //TODO : InteractiveQuery13
+    public static class InteractiveQuery13 extends Tinkerpop3SingletonOperationHandler<LdbcQuery13, LdbcQuery13Result> {
+
+        @Override
+        public LdbcQuery13Result convertSingleResult(Result result) throws ParseException {
+            //TODO : -1,0,1
+            return null;
+        }
+
+        @Override
+        public String getQueryString(Tinkerpop3DbConnectionState state, LdbcQuery13 operation) {
+            return state.getQueryStore().getQuery13(operation);
+        }
+    }
 
     //TODO : InteractiveQuery14
+
+    public static class ShortQuery1PersonProfile extends Tinkerpop3SingletonOperationHandler<LdbcShortQuery1PersonProfile, LdbcShortQuery1PersonProfileResult> {
+
+        @Override
+        public LdbcShortQuery1PersonProfileResult convertSingleResult(Result result) throws ParseException {
+            Vertex person = (Vertex) ((Map) result.getObject()).get("p");
+            String firstName = (String) person.property("firstName").value();
+            String lastName = (String) person.property("lastName").value();
+            long birthday = Tinkerpop3Converter.convertLongDateToEpoch((long) person.property("birthday").value());
+            String locationIP = (String) person.property("locationIP").value();
+            String browserUsed = (String) person.property("browserUsed").value();
+            Vertex city = (Vertex) ((Map) result.getObject()).get("c");
+            long cityId = (long) city.property("id").value();
+            String gender = (String) person.property("gender").value();
+            long creationDate = Tinkerpop3Converter.convertLongTimestampToEpoch((long) person.property("creationDate").value());
+            return new LdbcShortQuery1PersonProfileResult(
+                    firstName,
+                    lastName,
+                    birthday,
+                    locationIP,
+                    browserUsed,
+                    cityId,
+                    gender,
+                    creationDate);
+        }
+
+        @Override
+        public String getQueryString(Tinkerpop3DbConnectionState state, LdbcShortQuery1PersonProfile operation) {
+            return state.getQueryStore().getShortQuery1PersonProfile(operation);
+        }
+    }
+
+    public static class ShortQuery2PersonPosts extends Tinkerpop3ListOperationWithSubqueryHandler<LdbcShortQuery2PersonPosts, LdbcShortQuery2PersonPostsResult> {
+
+        @Override
+        public String getSubQueryString(Tinkerpop3DbConnectionState state, LdbcShortQuery2PersonPosts operation, Result result) {
+            //TODO : gt(6) ???
+            //TODO : repeat.until? message = post?
+            Vertex message = (Vertex) result.getObject();
+            return String.format("g.V('%s').repeat(out('replyOf')).until(hasLabel('Post').or().loops().is(gt(6))).hasLabel('Post').as('post').out('hasCreator').as('person').select('post','person')", message.toString());
+        }
+
+        @Override
+        public LdbcShortQuery2PersonPostsResult convertSingleResult(Result result, ResultSet subResultSet) throws ParseException {
+            Vertex message = (Vertex) result.getObject();
+            long messageId = (long) message.property("id").value();
+            //TODO : message content
+            String messageContent = "";
+            long messageCreationDate = Tinkerpop3Converter.convertLongTimestampToEpoch((long) message.property("creationDate").value());
+            Result subResult = subResultSet.one();
+            Vertex post = (Vertex) ((Map) subResult.getObject()).get("post");
+            Vertex person = (Vertex) ((Map) subResult.getObject()).get("person");
+            long originalPostId = (long) post.property("id").value();
+            long originalPostAuthorId = (long) person.property("id").value();
+            String originalPostAuthorFirstName = (String) person.property("firstName").value();
+            String originalPostAuthorLastName = (String) person.property("lastName").value();
+            return new LdbcShortQuery2PersonPostsResult(
+                    messageId,
+                    messageContent,
+                    messageCreationDate,
+                    originalPostId,
+                    originalPostAuthorId,
+                    originalPostAuthorFirstName,
+                    originalPostAuthorLastName);
+        }
+
+        @Override
+        public String getQueryString(Tinkerpop3DbConnectionState state, LdbcShortQuery2PersonPosts operation) {
+            return state.getQueryStore().getShortQuery2PersonPosts(operation);
+        }
+    }
+
+    public static class ShortQuery3PersonFriends extends Tinkerpop3ListOperationHandler<LdbcShortQuery3PersonFriends, LdbcShortQuery3PersonFriendsResult> {
+        @Override
+        public LdbcShortQuery3PersonFriendsResult convertSingleResult(Result result) throws ParseException {
+            Vertex person = (Vertex) ((Map) result.getObject()).get("f");
+            long personId = (long) person.property("id").value();
+            String firstName = (String) person.property("firstName").value();
+            String lastName = (String) person.property("lastName").value();
+            long friendshipCreationDate = Tinkerpop3Converter.convertLongTimestampToEpoch((long) ((Map) result.getObject()).get("kd"));
+            return new LdbcShortQuery3PersonFriendsResult(
+                    personId,
+                    firstName,
+                    lastName,
+                    friendshipCreationDate);
+        }
+
+        @Override
+        public String getQueryString(Tinkerpop3DbConnectionState state, LdbcShortQuery3PersonFriends operation) {
+            return state.getQueryStore().getShortQuery3PersonFriends(operation);
+        }
+    }
+
+    public static class ShortQuery4MessageContent extends Tinkerpop3SingletonOperationHandler<LdbcShortQuery4MessageContent, LdbcShortQuery4MessageContentResult> {
+
+        @Override
+        public LdbcShortQuery4MessageContentResult convertSingleResult(Result result) throws ParseException {
+            Map map = (Map) result.getObject();
+            long messageCreationDate = Tinkerpop3Converter.convertLongTimestampToEpoch((long) map.get("creationDate"));
+            String messageContent = "";
+            if (map.containsKey("content"))
+                messageContent = (String) map.get("content");
+            else
+                messageContent = (String) map.get("imageFile");
+            return new LdbcShortQuery4MessageContentResult(
+                    messageContent,
+                    messageCreationDate);
+        }
+
+        @Override
+        public String getQueryString(Tinkerpop3DbConnectionState state, LdbcShortQuery4MessageContent operation) {
+            return state.getQueryStore().getShortQuery4MessageContent(operation);
+        }
+    }
+
+    public static class ShortQuery5MessageCreator extends Tinkerpop3SingletonOperationHandler<LdbcShortQuery5MessageCreator, LdbcShortQuery5MessageCreatorResult> {
+
+        @Override
+        public LdbcShortQuery5MessageCreatorResult convertSingleResult(Result result) throws ParseException {
+            Map map = (Map) result.getObject();
+            long personId = (long) map.get("id");
+            String firstName = (String) map.get("firstName");
+            String lastName = (String) map.get("lstName");
+            return new LdbcShortQuery5MessageCreatorResult(
+                    personId,
+                    firstName,
+                    lastName);
+        }
+
+        @Override
+        public String getQueryString(Tinkerpop3DbConnectionState state, LdbcShortQuery5MessageCreator operation) {
+            return state.getQueryStore().getShortQuery5MessageCreator(operation);
+        }
+    }
+
+    public static class ShortQuery6MessageForum extends Tinkerpop3SingletonOperationWithSubqueryHandler<LdbcShortQuery6MessageForum, LdbcShortQuery6MessageForumResult> {
+
+
+        @Override
+        public String getSubQueryString(Tinkerpop3DbConnectionState state, LdbcShortQuery6MessageForum operation, Result result) {
+            String label = (String) result.getObject();
+            if (label.equals("Post"))
+                return String.format("g.V().has('Post', 'id',%d).in('containerOf').as('f').out('hasModerator').as('p').select('f', 'p')", operation.messageId());
+            else //Comment
+                return String.format("g.V().has('Comment', 'id',%d).repeat(out('replyOf')).until(hasLabel('Post').or().loops().is(gt(10))).in('containerOf').as('f').out('hasModerator').as('p').select('f','p')", operation.messageId());
+        }
+
+        @Override
+        public LdbcShortQuery6MessageForumResult convertSingleResult(Result result, ResultSet subResultSet) throws ParseException {
+            Map map = (Map) subResultSet.one().getObject();
+            Vertex forum = (Vertex) map.get("f");
+            Vertex person = (Vertex) map.get("p");
+            long forumId = (long) forum.property("id").value();
+            String forumTitle = (String) forum.property("title").value();
+            long moderatorId = (long) person.property("id").value();
+            String moderatorFirstName = (String) person.property("firstName").value();
+            String moderatorLastName = (String) person.property("lastName").value();
+            return new LdbcShortQuery6MessageForumResult(
+                    forumId,
+                    forumTitle,
+                    moderatorId,
+                    moderatorFirstName,
+                    moderatorLastName);
+        }
+
+        @Override
+        public String getQueryString(Tinkerpop3DbConnectionState state, LdbcShortQuery6MessageForum operation) {
+            return state.getQueryStore().getShortQuery6MessageForum(operation);
+        }
+    }
+
+    public static class ShortQuery7MessageReplies extends Tinkerpop3ListOperationWithSubqueryHandler<LdbcShortQuery7MessageReplies, LdbcShortQuery7MessageRepliesResult> {
+
+        @Override
+        public String getSubQueryString(Tinkerpop3DbConnectionState state, LdbcShortQuery7MessageReplies operation, Result result) {
+            Map map = (Map) result.getObject();
+            Vertex person1 = (Vertex) map.get("p1");
+            Vertex person2 = (Vertex) map.get("p2");
+            return String.format("g.V('%s').out('knows').hasId(%s)", person1.toString(), Long.toString((long) person2.property("id").value()));
+        }
+
+        @Override
+        public LdbcShortQuery7MessageRepliesResult convertSingleResult(Result result, ResultSet subResultSet) throws ParseException {
+            Map map = (Map) result.getObject();
+            Vertex person = (Vertex) map.get("p2");
+            Vertex comment = (Vertex) map.get("r");
+            long commentId = (long) comment.property("id").value();
+            String commentContent = (String) comment.property("content").value();
+            long commentCreationDate = Tinkerpop3Converter.convertLongTimestampToEpoch((long) comment.property("creationDate").value());
+            long replyAuthorId = (long) person.property("id").value();
+            String replyAuthorFirstName = (String) person.property("firstName").value();
+            String replyAuthorLastName = (String) person.property("lastName").value();
+            boolean replyAuthorKnowsOriginalMessageAuthor = (subResultSet.one() != null);
+            return new LdbcShortQuery7MessageRepliesResult(
+                    commentId,
+                    commentContent,
+                    commentCreationDate,
+                    replyAuthorId,
+                    replyAuthorFirstName,
+                    replyAuthorLastName,
+                    replyAuthorKnowsOriginalMessageAuthor);
+        }
+
+        @Override
+        public String getQueryString(Tinkerpop3DbConnectionState state, LdbcShortQuery7MessageReplies operation) {
+            return state.getQueryStore().getShortQuery7MessageReplies(operation);
+        }
+    }
+
 }
