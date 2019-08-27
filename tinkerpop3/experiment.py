@@ -24,7 +24,7 @@ def run(threads_count, operation_count):
 
 #threads_count = [1, 2, 4, 8, 16]
 threads_count = [1]
-operation_count = 5
+operation_count = 1
 for tc in threads_count:
 	run(tc, operation_count)
 

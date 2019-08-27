@@ -1,0 +1,1 @@
+graph.addVertex(label, 'Post', 'id', $postId, 'creationDate', $creationDate, 'locationIP', $locationIP, 'browserUsed', $browserUsed, 'length', $length, 'language', $language)

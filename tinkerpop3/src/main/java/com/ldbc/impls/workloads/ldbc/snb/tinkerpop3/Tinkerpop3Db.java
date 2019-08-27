@@ -57,6 +57,7 @@ import com.ldbc.driver.workloads.ldbc.snb.interactive.*;
 import com.ldbc.impls.workloads.ldbc.snb.tinkerpop3.converter.Tinkerpop3Converter;
 import com.ldbc.impls.workloads.ldbc.snb.tinkerpop3.operationhandlers.*;
 import com.ldbc.impls.workloads.ldbc.snb.db.BaseDb;
+import org.apache.commons.lang.StringUtils;
 import  org.apache.tinkerpop.gremlin.driver.Result;
 import org.apache.tinkerpop.gremlin.driver.ResultSet;
 import org.apache.tinkerpop.gremlin.structure.Edge;
@@ -549,7 +550,6 @@ public abstract class Tinkerpop3Db extends BaseDb<Tinkerpop3QueryStore> {
         @Override
         public String getSubQueryString(Tinkerpop3DbConnectionState state, LdbcShortQuery2PersonPosts operation, Result result) {
             Vertex message = (Vertex) result.getObject();
-            System.out.println(message.label());
             if (message.label().equals("Post"))
                 return String.format("g.V('%s').out('hasCreator')", message.toString());
             else
@@ -734,4 +734,304 @@ public abstract class Tinkerpop3Db extends BaseDb<Tinkerpop3QueryStore> {
         }
     }
 
+    public static class Update1AddPerson extends Tinkerpop3UpdateOperationHandler<LdbcUpdate1AddPerson> {
+
+        @Override
+        public List<String> getVerticesQueryString(Tinkerpop3DbConnectionState state, LdbcUpdate1AddPerson operation) {
+            List<String> ret = new ArrayList<>();
+            ret.clear();
+            ret.add(String.format("g.V().hasLabel('Place').has('id', %d)", operation.cityId()));
+            for (long tagId : operation.tagIds())
+                ret.add(String.format("g.V().hasLabel('Tag').has('id', %d)", tagId));
+            for (LdbcUpdate1AddPerson.Organization org : operation.studyAt())
+                ret.add(String.format("g.V().hasLabel('Organisation').has('id', %d)", org.organizationId()));
+            for (LdbcUpdate1AddPerson.Organization org : operation.workAt())
+                ret.add(String.format("g.V().hasLabel('Organisation').has('id', %d)", org.organizationId()));
+            return ret;
+        }
+
+        @Override
+        public List<String> getEdgesUpdateString(Tinkerpop3DbConnectionState state, LdbcUpdate1AddPerson operation, List<Vertex> vertices, Vertex person) {
+            List<String> ret = new ArrayList<>();
+            ret.clear();
+            Iterator<LdbcUpdate1AddPerson.Organization> universityIter = operation.studyAt().iterator();
+            Iterator<LdbcUpdate1AddPerson.Organization> companyIter = operation.workAt().iterator();
+            for (Vertex other : vertices) {
+                switch (other.label()) {
+                    case "Place":
+                        ret.add(String.format("graph.addEdge('%s', '%s', label, 'isLocatedIn')", person.id().toString(), other.id().toString()));
+                        break;
+                    case "Tag":
+                        ret.add(String.format("graph.addEdge('%s', '%s', label, 'hasInterest')", person.id().toString(), other.id().toString()));
+                        break;
+                    case "Organisation":
+                        if (((String)other.property("type").value()).equals("University"))
+                            ret.add(String.format("graph.addEdge('%s', '%s', label, 'studyAt', 'classYear', %d)", person.id().toString(), other.id().toString(), universityIter.next().year()));
+                        else // Company
+                            ret.add(String.format("graph.addEdge('%s', '%s', label, 'workAt', 'workFrom', %d", person.id().toString(), other.id().toString(), companyIter.next().year()));
+                        break;
+                }
+            }
+            return ret;
+        }
+
+        @Override
+        public String getQueryString(Tinkerpop3DbConnectionState state, LdbcUpdate1AddPerson operation) {
+            return state.getQueryStore().getUpdate1Single(operation);
+        }
+    }
+
+    public static class Update2AddPostLike extends Tinkerpop3UpdateOperationHandler<LdbcUpdate2AddPostLike> {
+
+        @Override
+        public List<String> getVerticesQueryString(Tinkerpop3DbConnectionState state, LdbcUpdate2AddPostLike operation) {
+            List<String> ret = new ArrayList<>();
+            ret.clear();
+            ret.add(String.format("g.V().hasLabel('Person').has('id', %d)", operation.personId()));
+            ret.add(String.format("g.V().hasLabel('Post').has('id', %d)", operation.postId()));
+            return ret;
+        }
+
+        @Override
+        public List<String> getEdgesUpdateString(Tinkerpop3DbConnectionState state, LdbcUpdate2AddPostLike operation, List<Vertex> vertices, Vertex newVertex) {
+            List<String> ret = new ArrayList<>();
+            ret.clear();
+            Vertex person = null, post = null;
+            for (Vertex v : vertices)
+                if (v.label().equals("Person"))
+                    person = v;
+                else
+                    post = v;
+            ret.add(String.format("graph.addEdge('%s', '%s', label, 'likes', 'creationDate', %s)", person.id().toString(), post.id().toString(), state.getQueryStore().getConverter().convertDateTime(operation.creationDate())));
+            return ret;
+        }
+
+        @Override
+        public String getQueryString(Tinkerpop3DbConnectionState state, LdbcUpdate2AddPostLike operation) {
+            return null;
+        }
+    }
+
+    public static class Update3AddCommentLike extends Tinkerpop3UpdateOperationHandler<LdbcUpdate3AddCommentLike> {
+
+        @Override
+        public List<String> getVerticesQueryString(Tinkerpop3DbConnectionState state, LdbcUpdate3AddCommentLike operation) {
+            List<String> ret = new ArrayList<>();
+            ret.clear();
+            ret.add(String.format("g.V().hasLabel('Person').has('id', %d)", operation.personId()));
+            ret.add(String.format("g.V().hasLabel('Comment').has('id', %d)", operation.commentId()));
+            return ret;
+        }
+
+        @Override
+        public List<String> getEdgesUpdateString(Tinkerpop3DbConnectionState state, LdbcUpdate3AddCommentLike operation, List<Vertex> vertices, Vertex newVertex) {
+            List<String> ret = new ArrayList<>();
+            ret.clear();
+            Vertex person = null, comment = null;
+            for (Vertex v : vertices)
+                if (v.label().equals("Person"))
+                    person = v;
+                else
+                    comment = v;
+            ret.add(String.format("graph.addEdge('%s', '%s', label, 'likes', 'creationDate', %s)", person.id().toString(), comment.id().toString(), state.getQueryStore().getConverter().convertDateTime(operation.creationDate())));
+            return ret;
+        }
+
+        @Override
+        public String getQueryString(Tinkerpop3DbConnectionState state, LdbcUpdate3AddCommentLike operation) {
+            return null;
+        }
+    }
+
+    public static class Update4AddForum extends Tinkerpop3UpdateOperationHandler<LdbcUpdate4AddForum> {
+
+        @Override
+        public List<String> getVerticesQueryString(Tinkerpop3DbConnectionState state, LdbcUpdate4AddForum operation) {
+            List<String> ret = new ArrayList<>();
+            ret.clear();
+            ret.add(String.format("g.V().hasLabel('Person').has('id', %d)", operation.moderatorPersonId()));
+            for (long tagId : operation.tagIds())
+                ret.add(String.format("g.V().hasLabel('Tag').has('id', %d)", tagId));
+            return ret;
+        }
+
+        @Override
+        public List<String> getEdgesUpdateString(Tinkerpop3DbConnectionState state, LdbcUpdate4AddForum operation, List<Vertex> vertices, Vertex forum) {
+            List<String> ret = new ArrayList<>();
+            ret.clear();
+            for (Vertex other : vertices) {
+                switch (other.label()) {
+                    case "Person":
+                        ret.add(String.format("graph.addEdge('%s', '%s', label, 'hasModerator')", forum.id().toString(), other.id().toString()));
+                        break;
+                    case "Tag":
+                        ret.add(String.format("graph.addEdge('%s', '%s', label, 'hasTag')", forum.id().toString(), other.id().toString()));
+                        break;
+                }
+            }
+            return ret;
+        }
+
+        @Override
+        public String getQueryString(Tinkerpop3DbConnectionState state, LdbcUpdate4AddForum operation) {
+            return state.getQueryStore().getUpdate4Single(operation);
+        }
+    }
+
+    public static class Update5AddForumMembership extends Tinkerpop3UpdateOperationHandler<LdbcUpdate5AddForumMembership> {
+
+        @Override
+        public List<String> getVerticesQueryString(Tinkerpop3DbConnectionState state, LdbcUpdate5AddForumMembership operation) {
+            List<String> ret = new ArrayList<>();
+            ret.clear();
+            ret.add(String.format("g.V().hasLabel('Person').has('id', %d)", operation.personId()));
+            ret.add(String.format("g.V().hasLabel('Forum').has('id', %d)", operation.forumId()));
+            return ret;
+        }
+
+        @Override
+        public List<String> getEdgesUpdateString(Tinkerpop3DbConnectionState state, LdbcUpdate5AddForumMembership operation, List<Vertex> vertices, Vertex newVertex) {
+            List<String> ret = new ArrayList<>();
+            ret.clear();
+            Vertex forum =null, person = null;
+            for (Vertex v : vertices)
+                if (v.label().equals("Person"))
+                    person = v;
+                else
+                    forum = v;
+            ret.add(String.format("graph.addEdge('%s', '%s', label, 'hasMember', 'joinDate', %s)", forum.id().toString(), person.id().toString(), state.getQueryStore().getConverter().convertDateTime(operation.joinDate())));
+            return ret;
+        }
+
+        @Override
+        public String getQueryString(Tinkerpop3DbConnectionState state, LdbcUpdate5AddForumMembership operation) {
+            return null;
+        }
+    }
+
+    public static class Update6AddPost extends Tinkerpop3UpdateOperationHandler<LdbcUpdate6AddPost> {
+
+        @Override
+        public List<String> getVerticesQueryString(Tinkerpop3DbConnectionState state, LdbcUpdate6AddPost operation) {
+            List<String> ret = new ArrayList<>();
+            ret.clear();
+            ret.add(String.format("g.V().hasLabel('Place').has('id', %d)", operation.countryId()));
+            ret.add(String.format("g.V().hasLabel('Person').has('id', %d)", operation.authorPersonId()));
+            ret.add(String.format("g.V().hasLabel('Forum').has('id', %d)", operation.forumId()));
+            for (long tagId : operation.tagIds())
+                ret.add(String.format("g.V().hasLabel('Tag').has('id', %d)", tagId));
+            return ret;
+        }
+
+        @Override
+        public List<String> getEdgesUpdateString(Tinkerpop3DbConnectionState state, LdbcUpdate6AddPost operation, List<Vertex> vertices, Vertex post) {
+            List<String> ret = new ArrayList<>();
+            ret.clear();
+            for (Vertex other : vertices) {
+                switch (other.label()) {
+                    case "Place":
+                        ret.add(String.format("graph.addEdge('%s', '%s', label, 'isLocatedIn')", post.id().toString(), other.id().toString()));
+                        break;
+                    case "Person":
+                        ret.add(String.format("graph.addEdge('%s', '%s', label, 'hasCreator')", post.id().toString(), other.id().toString()));
+                        break;
+                    case "Forum":
+                        ret.add(String.format("graph.addEdge('%s', '%s', label, 'containerOf')", other.id().toString(), post.id().toString()));
+                        break;
+                    case "Tag":
+                        ret.add(String.format("graph.addEdge('%s', '%s', label, 'hasTag')", post.id().toString(), other.id().toString()));
+                        break;
+                }
+            }
+            return ret;
+        }
+
+        @Override
+        public String getQueryString(Tinkerpop3DbConnectionState state, LdbcUpdate6AddPost operation) {
+            String ret = state.getQueryStore().getUpdate6Single(operation);
+            ret = StringUtils.substringBeforeLast(ret, ")");
+            String contentStr = "", imageFileStr = "";
+            if (!operation.content().equals(""))
+                contentStr = ", 'content', " + state.getQueryStore().getConverter().convertString(operation.content());
+            if (!operation.imageFile().equals(""))
+                imageFileStr = ", 'imageFile', " + state.getQueryStore().getConverter().convertString(operation.imageFile());
+            ret = ret + contentStr + imageFileStr + ")";
+            return ret;
+        }
+    }
+
+    public static class Update7AddComment extends Tinkerpop3UpdateOperationHandler<LdbcUpdate7AddComment> {
+
+        @Override
+        public List<String> getVerticesQueryString(Tinkerpop3DbConnectionState state, LdbcUpdate7AddComment operation) {
+            List<String> ret = new ArrayList<>();
+            ret.clear();
+            ret.add(String.format("g.V().hasLabel('Place').has('id', %d)", operation.countryId()));
+            ret.add(String.format("g.V().hasLabel('Person').has('id', %d)", operation.authorPersonId()));
+            if (operation.replyToCommentId() != -1)
+                ret.add(String.format("g.V().hasLabel('Comment').has('id', %d)", operation.replyToCommentId()));
+            if (operation.replyToPostId() != -1)
+                ret.add(String.format("g.V().hasLabel('Post').has('id', %d)", operation.replyToPostId()));
+            for (long tagId : operation.tagIds())
+                ret.add(String.format("g.V().hasLabel('Tag').has('id', %d)", tagId));
+            return ret;
+        }
+
+        @Override
+        public List<String> getEdgesUpdateString(Tinkerpop3DbConnectionState state, LdbcUpdate7AddComment operation, List<Vertex> vertices, Vertex comment) {
+            List<String> ret = new ArrayList<>();
+            ret.clear();
+            for (Vertex other : vertices) {
+                switch (other.label()) {
+                    case "Place":
+                        ret.add(String.format("graph.addEdge('%s', '%s', label, 'isLocatedIn')", comment.id().toString(), other.id().toString()));
+                        break;
+                    case "Person":
+                        ret.add(String.format("graph.addEdge('%s', '%s', label, 'hasCreator')", comment.id().toString(), other.id().toString()));
+                        break;
+                    case "Comment":
+                    case "Post":
+                        ret.add(String.format("graph.addEdge('%s', '%s', label, 'replyOf')", comment.id().toString(), other.id().toString()));
+                        break;
+                    case "Tag":
+                        ret.add(String.format("graph.addEdge('%s', '%s', label, 'hasTag')", comment.id().toString(), other.id().toString()));
+                        break;
+                }
+            }
+            return ret;
+        }
+
+        @Override
+        public String getQueryString(Tinkerpop3DbConnectionState state, LdbcUpdate7AddComment operation) {
+            return state.getQueryStore().getUpdate7Single(operation);
+        }
+    }
+
+    public static class Update8AddFriendship extends Tinkerpop3UpdateOperationHandler<LdbcUpdate8AddFriendship> {
+
+        @Override
+        public List<String> getVerticesQueryString(Tinkerpop3DbConnectionState state, LdbcUpdate8AddFriendship operation) {
+            List<String> ret = new ArrayList<>();
+            ret.clear();
+            ret.add(String.format("g.V().hasLabel('Person').has('id', %d)", operation.person1Id()));
+            ret.add(String.format("g.V().hasLabel('Person').has('id', %d)", operation.person2Id()));
+            return ret;
+        }
+
+        @Override
+        public List<String> getEdgesUpdateString(Tinkerpop3DbConnectionState state, LdbcUpdate8AddFriendship operation, List<Vertex> vertices, Vertex newVertex) {
+            List<String> ret = new ArrayList<>();
+            ret.clear();
+            Vertex person1 = vertices.get(0);
+            Vertex person2 = vertices.get(1);
+            ret.add(String.format("graph.addEdge('%s', '%s', label, 'knows', 'creationDate', %s)", person1.id().toString(), person2.id().toString(), state.getQueryStore().getConverter().convertDateTime(operation.creationDate())));
+            ret.add(String.format("graph.addEdge('%s', '%s', label, 'knows', 'creationDate', %s)", person2.id().toString(), person1.id().toString(), state.getQueryStore().getConverter().convertDateTime(operation.creationDate())));
+            return ret;
+        }
+
+        @Override
+        public String getQueryString(Tinkerpop3DbConnectionState state, LdbcUpdate8AddFriendship operation) {
+            return null;
+        }
+    }
 }

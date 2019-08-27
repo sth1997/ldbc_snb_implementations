@@ -1,0 +1,1 @@
+graph.addVertex(label, 'Person', 'id', $personId, 'firstName', $personFirstName, 'lastName', $personLastName, 'gender', $gender, 'birthday', $birthday, 'creationDate', $creationDate, 'locationIP', $locationIP, 'browserUsed', $browserUsed, 'language', $languages, 'email', $emails)

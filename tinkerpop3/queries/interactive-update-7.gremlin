@@ -1,0 +1,1 @@
+graph.addVertex(label, 'Comment', 'id', $commentId, 'creationDate', $creationDate, 'locationIP', $locationIP, 'browserUsed', $browserUsed, 'content', $content, 'length', $length)
