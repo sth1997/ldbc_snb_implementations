@@ -1,0 +1,1 @@
+g.V().has('Person', 'id', $person1Id).repeat(out('knows').simplePath()).until(has('Person', 'id', $person2Id).or().loops().is(gt(2))).has('Person', 'id', $person2Id).path().order().by(count(local)).limit(10)

@@ -23,6 +23,7 @@ public class Tinkerpop3InteractiveDb extends Tinkerpop3Db{
         registerOperationHandler(LdbcQuery11.class, InteractiveQuery11.class);
         registerOperationHandler(LdbcQuery12.class, InteractiveQuery12.class);
         registerOperationHandler(LdbcQuery13.class, InteractiveQuery13.class);
+        registerOperationHandler(LdbcQuery14.class, InteractiveQuery14.class);
 
         registerOperationHandler(LdbcShortQuery1PersonProfile.class, ShortQuery1PersonProfile.class);
         registerOperationHandler(LdbcShortQuery2PersonPosts.class, ShortQuery2PersonPosts.class);

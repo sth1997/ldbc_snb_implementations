@@ -1,1 +1,1 @@
-g.V().has('Person', 'id', $personId).outE('knows').as('k').values('creationDate').as('kd').select('k').inV().as('f').order().by('kd', decr).by('id', incr).select('kd', 'f')
+g.V().has('Person', 'id', $personId).outE('knows').as('k').values('creationDate').as('kd').select('k').inV().as('f').order().by(select('kd'), decr).by('id', incr).select('kd', 'f')
