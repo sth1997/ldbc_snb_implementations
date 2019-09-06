@@ -1,1 +1,1 @@
-g.V().hasLabel('Person').has('id', $personId).out('knows').union(identity(),out('knows')).dedup().has('id', neq($personId)).as('friends').in('hasCreator').has('creationDate',lt($maxDate)).as('post').order().by('creationDate', decr).by('id', incr).limit(20).select('friends','post')
+g.V().hasLabel('Person').has('id', $personId).out('knows').union(identity(),out('knows')).dedup().by('id').has('id', neq($personId)).as('friends').in('hasCreator').has('creationDate',lt($maxDate)).as('post').order().by('creationDate', decr).by('id', incr).limit(20).select('friends','post')

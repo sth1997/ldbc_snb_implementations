@@ -4,11 +4,6 @@
 
     <repositories>
         <repository>
-            <id>alimirror</id>
-            <name>alibaba mirror</name>
-            <url>http://mvnrepo.alibaba-inc.com/mvn/repository</url>
-        </repository>
-        <repository>
             <id>maven2</id>
             <url>http://search.maven.org</url>
         </repository>
@@ -24,27 +19,6 @@
     <name>Tinkerpop3 Interactive class</name>
     <description>Tinkerpop3 implementation for SNB Interactive driver</description>
     <dependencies>
-        <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-            <version>2.5</version>
-        </dependency>
-        <dependency>
-            <groupId>commons-lang</groupId>
-            <artifactId>commons-lang</artifactId>
-            <version>2.6</version>
-        </dependency>
-        <dependency>
-            <groupId>com.alibaba.maxgraph</groupId>
-            <artifactId>maxgraph-sdk</artifactId>
-            <version>1.5.15-SNAPSHOT</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.fasterxml.jackson.core</groupId>
-                    <artifactId>jackson-databind</artifactId>
-                </exclusion>
-            </exclusions> 
-       </dependency>
         <dependency>
             <groupId>com.ldbc.snb</groupId>
             <artifactId>common</artifactId>

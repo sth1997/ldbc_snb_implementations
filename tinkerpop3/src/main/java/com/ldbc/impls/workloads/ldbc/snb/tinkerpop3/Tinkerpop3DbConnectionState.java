@@ -2,20 +2,15 @@ package com.ldbc.impls.workloads.ldbc.snb.tinkerpop3;
 
 import com.ldbc.driver.DbException;
 import com.ldbc.impls.workloads.ldbc.snb.BaseDbConnectionState;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
 import  org.apache.tinkerpop.gremlin.driver.Client;
 import  org.apache.tinkerpop.gremlin.driver.Cluster;
 import  org.apache.tinkerpop.gremlin.driver.MessageSerializer;
 import  org.apache.tinkerpop.gremlin.driver.ser.GryoMessageSerializerV1d0;
-import org.apache.tinkerpop.gremlin.driver.ser.Serializers;
 
 import  java.util.HashMap;
-import java.util.List;
 import  java.util.Map;
 
 import java.io.IOException;
-import java.util.stream.Collectors;
 
 public class Tinkerpop3DbConnectionState extends BaseDbConnectionState<Tinkerpop3QueryStore>{
 
@@ -30,7 +25,13 @@ public class Tinkerpop3DbConnectionState extends BaseDbConnectionState<Tinkerpop
         String user = properties.get("user");
         String password = properties.get("password");
 
-        MessageSerializer serializer = Serializers.GRYO_V1D0.simpleInstance();
+        final MessageSerializer serializer = new GryoMessageSerializerV1d0();
+        final Map<String, Object> config = new HashMap<String, Object>() {{
+            //put(GryoMessageSerializerV1d0.TOKEN_SERIALIZE_RESULT_TO_STRING, true);
+        }};
+        serializer.configure(config, null);
+
+        /*MessageSerializer serializer = Serializers.GRYO_V1D0.simpleInstance();
         Map<String, Object> serializerConfig = new HashMap<String, Object>();
         List<String> customSerializerClassList;
         try {
@@ -41,7 +42,7 @@ public class Tinkerpop3DbConnectionState extends BaseDbConnectionState<Tinkerpop
             throw new RuntimeException(e);
         }
         serializerConfig.put("custom", customSerializerClassList);
-        serializer.configure(serializerConfig, null);
+        serializer.configure(serializerConfig, null);*/
 
         Cluster.Builder  builder  =  Cluster.build();
         builder.addContactPoint(ip);

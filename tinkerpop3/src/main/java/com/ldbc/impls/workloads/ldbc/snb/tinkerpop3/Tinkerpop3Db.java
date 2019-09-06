@@ -3,56 +3,6 @@ package com.ldbc.impls.workloads.ldbc.snb.tinkerpop3;
 import com.google.common.primitives.Ints;
 import com.ldbc.driver.DbException;
 import com.ldbc.driver.control.LoggingService;
-import com.ldbc.driver.workloads.ldbc.snb.bi.LdbcSnbBiQuery10TagPerson;
-import com.ldbc.driver.workloads.ldbc.snb.bi.LdbcSnbBiQuery10TagPersonResult;
-import com.ldbc.driver.workloads.ldbc.snb.bi.LdbcSnbBiQuery11UnrelatedReplies;
-import com.ldbc.driver.workloads.ldbc.snb.bi.LdbcSnbBiQuery11UnrelatedRepliesResult;
-import com.ldbc.driver.workloads.ldbc.snb.bi.LdbcSnbBiQuery12TrendingPosts;
-import com.ldbc.driver.workloads.ldbc.snb.bi.LdbcSnbBiQuery12TrendingPostsResult;
-import com.ldbc.driver.workloads.ldbc.snb.bi.LdbcSnbBiQuery13PopularMonthlyTags;
-import com.ldbc.driver.workloads.ldbc.snb.bi.LdbcSnbBiQuery13PopularMonthlyTagsResult;
-import com.ldbc.driver.workloads.ldbc.snb.bi.LdbcSnbBiQuery14TopThreadInitiators;
-import com.ldbc.driver.workloads.ldbc.snb.bi.LdbcSnbBiQuery14TopThreadInitiatorsResult;
-import com.ldbc.driver.workloads.ldbc.snb.bi.LdbcSnbBiQuery15SocialNormals;
-import com.ldbc.driver.workloads.ldbc.snb.bi.LdbcSnbBiQuery15SocialNormalsResult;
-import com.ldbc.driver.workloads.ldbc.snb.bi.LdbcSnbBiQuery16ExpertsInSocialCircle;
-import com.ldbc.driver.workloads.ldbc.snb.bi.LdbcSnbBiQuery16ExpertsInSocialCircleResult;
-import com.ldbc.driver.workloads.ldbc.snb.bi.LdbcSnbBiQuery17FriendshipTriangles;
-import com.ldbc.driver.workloads.ldbc.snb.bi.LdbcSnbBiQuery17FriendshipTrianglesResult;
-import com.ldbc.driver.workloads.ldbc.snb.bi.LdbcSnbBiQuery18PersonPostCounts;
-import com.ldbc.driver.workloads.ldbc.snb.bi.LdbcSnbBiQuery18PersonPostCountsResult;
-import com.ldbc.driver.workloads.ldbc.snb.bi.LdbcSnbBiQuery19StrangerInteraction;
-import com.ldbc.driver.workloads.ldbc.snb.bi.LdbcSnbBiQuery19StrangerInteractionResult;
-import com.ldbc.driver.workloads.ldbc.snb.bi.LdbcSnbBiQuery1PostingSummary;
-import com.ldbc.driver.workloads.ldbc.snb.bi.LdbcSnbBiQuery1PostingSummaryResult;
-import com.ldbc.driver.workloads.ldbc.snb.bi.LdbcSnbBiQuery20HighLevelTopics;
-import com.ldbc.driver.workloads.ldbc.snb.bi.LdbcSnbBiQuery20HighLevelTopicsResult;
-import com.ldbc.driver.workloads.ldbc.snb.bi.LdbcSnbBiQuery21Zombies;
-import com.ldbc.driver.workloads.ldbc.snb.bi.LdbcSnbBiQuery21ZombiesResult;
-import com.ldbc.driver.workloads.ldbc.snb.bi.LdbcSnbBiQuery22InternationalDialog;
-import com.ldbc.driver.workloads.ldbc.snb.bi.LdbcSnbBiQuery22InternationalDialogResult;
-import com.ldbc.driver.workloads.ldbc.snb.bi.LdbcSnbBiQuery23HolidayDestinations;
-import com.ldbc.driver.workloads.ldbc.snb.bi.LdbcSnbBiQuery23HolidayDestinationsResult;
-import com.ldbc.driver.workloads.ldbc.snb.bi.LdbcSnbBiQuery24MessagesByTopic;
-import com.ldbc.driver.workloads.ldbc.snb.bi.LdbcSnbBiQuery24MessagesByTopicResult;
-import com.ldbc.driver.workloads.ldbc.snb.bi.LdbcSnbBiQuery25WeightedPaths;
-import com.ldbc.driver.workloads.ldbc.snb.bi.LdbcSnbBiQuery25WeightedPathsResult;
-import com.ldbc.driver.workloads.ldbc.snb.bi.LdbcSnbBiQuery2TopTags;
-import com.ldbc.driver.workloads.ldbc.snb.bi.LdbcSnbBiQuery2TopTagsResult;
-import com.ldbc.driver.workloads.ldbc.snb.bi.LdbcSnbBiQuery3TagEvolution;
-import com.ldbc.driver.workloads.ldbc.snb.bi.LdbcSnbBiQuery3TagEvolutionResult;
-import com.ldbc.driver.workloads.ldbc.snb.bi.LdbcSnbBiQuery4PopularCountryTopics;
-import com.ldbc.driver.workloads.ldbc.snb.bi.LdbcSnbBiQuery4PopularCountryTopicsResult;
-import com.ldbc.driver.workloads.ldbc.snb.bi.LdbcSnbBiQuery5TopCountryPosters;
-import com.ldbc.driver.workloads.ldbc.snb.bi.LdbcSnbBiQuery5TopCountryPostersResult;
-import com.ldbc.driver.workloads.ldbc.snb.bi.LdbcSnbBiQuery6ActivePosters;
-import com.ldbc.driver.workloads.ldbc.snb.bi.LdbcSnbBiQuery6ActivePostersResult;
-import com.ldbc.driver.workloads.ldbc.snb.bi.LdbcSnbBiQuery7AuthoritativeUsers;
-import com.ldbc.driver.workloads.ldbc.snb.bi.LdbcSnbBiQuery7AuthoritativeUsersResult;
-import com.ldbc.driver.workloads.ldbc.snb.bi.LdbcSnbBiQuery8RelatedTopics;
-import com.ldbc.driver.workloads.ldbc.snb.bi.LdbcSnbBiQuery8RelatedTopicsResult;
-import com.ldbc.driver.workloads.ldbc.snb.bi.LdbcSnbBiQuery9RelatedForums;
-import com.ldbc.driver.workloads.ldbc.snb.bi.LdbcSnbBiQuery9RelatedForumsResult;
 import com.ldbc.driver.workloads.ldbc.snb.interactive.*;
 import com.ldbc.impls.workloads.ldbc.snb.tinkerpop3.converter.Tinkerpop3Converter;
 import com.ldbc.impls.workloads.ldbc.snb.tinkerpop3.operationhandlers.*;
@@ -87,7 +37,8 @@ public abstract class Tinkerpop3Db extends BaseDb<Tinkerpop3QueryStore> {
 
         @Override
         public String getSubQueryString(Tinkerpop3DbConnectionState state, LdbcQuery1 operation, Result result) {
-            return String.format("g.V('%s').union(out('isLocatedIn').values('name'),outE('studyAt').as('study').inV().as('u').out('isLocatedIn').as('city').select('study','u','city'),outE('workAt').as('we').inV().as('company').out('isLocatedIn').as('country').select('we','company','country'))", ((Map) result.getObject()).get("a").toString());
+            Vertex person = (Vertex) ((Map) result.getObject()).get("a");
+            return String.format("g.V('%s').union(out('isLocatedIn').values('name'),outE('studyAt').as('study').inV().as('u').out('isLocatedIn').as('city').select('study','u','city'),outE('workAt').as('we').inV().as('company').out('isLocatedIn').as('country').select('we','company','country'))", person.id().toString());
         }
 
         @Override
@@ -213,7 +164,7 @@ public abstract class Tinkerpop3Db extends BaseDb<Tinkerpop3QueryStore> {
             Date endDate = state.getQueryStore().addDays(operation.startDate(), operation.durationDays());
             String endTime = state.getQueryStore().getConverter().convertDateTime(endDate);
             String countryY = state.getQueryStore().getConverter().convertString(operation.countryYName());
-            return String.format("g.V('%s').in('hasCreator').has('creationDate',inside(%s,%s)).filter(__.out('isLocatedIn').has('name',eq(%s))).count()", entry.getKey().toString(), startTime, endTime, countryY);
+            return String.format("g.V('%s').in('hasCreator').has('creationDate',inside(%s,%s)).filter(__.out('isLocatedIn').has('name',eq(%s))).count()", entry.getKey().id().toString(), startTime, endTime, countryY);
         }
 
         @Override
@@ -245,8 +196,8 @@ public abstract class Tinkerpop3Db extends BaseDb<Tinkerpop3QueryStore> {
 
         @Override
         public LdbcQuery4Result convertSingleResult(Result result) throws ParseException {
-            Map.Entry<Vertex, Long> entry = (Map.Entry) result.getObject();
-            String tagName = (String) entry.getKey().property("name").value();
+            Map.Entry<Map, Long> entry = (Map.Entry) result.getObject();
+            String tagName = (String) entry.getKey().get("name");
             int postCount = entry.getValue().intValue();
             return new LdbcQuery4Result(tagName, postCount);
         }
@@ -262,8 +213,8 @@ public abstract class Tinkerpop3Db extends BaseDb<Tinkerpop3QueryStore> {
 
         @Override
         public LdbcQuery5Result convertSingleResult(Result result) throws ParseException {
-            Map.Entry<Vertex, Long> entry = (Map.Entry) result.getObject();
-            String forumTitle = (String) entry.getKey().property("title").value();
+            Map.Entry<Map, Long> entry = (Map.Entry) result.getObject();
+            String forumTitle = (String) entry.getKey().get("title");
             int postCount = entry.getValue().intValue();
             return new LdbcQuery5Result(forumTitle, postCount);
         }
@@ -278,8 +229,8 @@ public abstract class Tinkerpop3Db extends BaseDb<Tinkerpop3QueryStore> {
 
         @Override
         public LdbcQuery6Result convertSingleResult(Result result) throws ParseException {
-            Map.Entry<Vertex, Long> entry = (Map.Entry) result.getObject();
-            String tagName = (String) entry.getKey().property("name").value();
+            Map.Entry<String, Long> entry = (Map.Entry) result.getObject();
+            String tagName = (String) entry.getKey();
             int postCount = entry.getValue().intValue();
             return new LdbcQuery6Result(tagName, postCount);
         }
@@ -422,9 +373,9 @@ public abstract class Tinkerpop3Db extends BaseDb<Tinkerpop3QueryStore> {
 
         @Override
         public String getSubQueryString(Tinkerpop3DbConnectionState state, LdbcQuery12 operation, Result result) {
-            Vertex person = (Vertex) ((Map.Entry) result.getObject()).getKey();
+            long personId =  (long) ((Map)((Map.Entry) result.getObject()).getKey()).get("id");
             String tagClassName = state.getQueryStore().getConverter().convertString(operation.tagClassName());
-            return String.format("g.V('%s').in('hasCreator').hasLabel('Comment').as('comment').out('replyOf').hasLabel('Post').out('hasTag').as('tag').out('hasType').has('name',within(%s)).select('tag').values('name').dedup()", person.toString(), tagClassName);
+            return String.format("g.V().hasLabel('Person').has('id', %d).in('hasCreator').hasLabel('Comment').as('comment').out('replyOf').hasLabel('Post').out('hasTag').as('tag').out('hasType').has('name',within(%s)).select('tag').values('name').dedup()", personId, tagClassName);
         }
 
         @Override
@@ -479,8 +430,8 @@ public abstract class Tinkerpop3Db extends BaseDb<Tinkerpop3QueryStore> {
             subQueryList.clear();
             while (iter.hasNext()) {
                 Vertex thisPerson = (Vertex) iter.next();
-                subQueryList.add(String.format("g.timeout(600000).V('%s').in('hasCreator').out('replyOf').as('p').out('hasCreator').hasId(%d).select('p').label()", lastPerson.toString(), (long)thisPerson.property("id").value()));
-                subQueryList.add(String.format("g.timeout(600000).V('%s').in('hasCreator').out('replyOf').as('p').out('hasCreator').hasId(%d).select('p').label()", thisPerson.toString(), (long)lastPerson.property("id").value()));
+                subQueryList.add(String.format("g.timeout(600000).V('%s').in('hasCreator').out('replyOf').as('p').out('hasCreator').has('id', %d).select('p').label()", lastPerson.id().toString(), (long)thisPerson.property("id").value()));
+                subQueryList.add(String.format("g.timeout(600000).V('%s').in('hasCreator').out('replyOf').as('p').out('hasCreator').has('id', %d).select('p').label()", thisPerson.id().toString(), (long)lastPerson.property("id").value()));
                 lastPerson = thisPerson;
             }
             return subQueryList;
@@ -551,9 +502,9 @@ public abstract class Tinkerpop3Db extends BaseDb<Tinkerpop3QueryStore> {
         public String getSubQueryString(Tinkerpop3DbConnectionState state, LdbcShortQuery2PersonPosts operation, Result result) {
             Vertex message = (Vertex) result.getObject();
             if (message.label().equals("Post"))
-                return String.format("g.V('%s').out('hasCreator')", message.toString());
+                return String.format("g.V('%s').out('hasCreator')", message.id().toString());
             else
-                return String.format("g.V('%s').repeat(out('replyOf')).until(hasLabel('Post').or().loops().is(gt(6))).hasLabel('Post').as('post').out('hasCreator').as('person').select('post','person')", message.toString());
+                return String.format("g.V('%s').repeat(out('replyOf')).until(hasLabel('Post').or().loops().is(gt(6))).hasLabel('Post').as('post').out('hasCreator').as('person').select('post','person')", message.id().toString());
         }
 
         @Override
@@ -703,7 +654,7 @@ public abstract class Tinkerpop3Db extends BaseDb<Tinkerpop3QueryStore> {
             Map map = (Map) result.getObject();
             Vertex person1 = (Vertex) map.get("p1");
             Vertex person2 = (Vertex) map.get("p2");
-            return String.format("g.V('%s').out('knows').has('id', %d)", person1.toString(), (long) person2.property("id").value());
+            return String.format("g.V('%s').out('knows').has('id', %d)", person1.id().toString(), (long) person2.property("id").value());
         }
 
         @Override
